@@ -1,1 +1,2 @@
-# vaactors
+# vaactor
+Vaadin with Actors

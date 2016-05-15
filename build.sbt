@@ -8,7 +8,7 @@ scalaVersion in ThisBuild := "2.11.8"
 
 crossScalaVersions in ThisBuild := Seq("2.11.8")
 
-scalacOptions in ThisBuild ++= Seq("-deprecation", "-unchecked", "-encoding", "UTF-8")
+scalacOptions in ThisBuild ++= Seq("-deprecation", "-unchecked", "-feature")
 
 resolvers in ThisBuild += "Scaladin Snapshots" at "http://henrikerola.github.io/repository/snapshots/"
 

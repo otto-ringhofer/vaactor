@@ -12,17 +12,17 @@ import vaadin.scala.server.ScaladinServlet
 object VaactorsServlet {
 
   /** the actor system */
-  val system: ActorSystem = ActorSystem("vaactor-servlet")
-
+  val system: ActorSystem = ActorSystem(vaactorConfig.getString("system-name"))
+  val servletConfig = vaactorConfig.getConfig("servlet")
 }
 
 abstract class VaactorsServlet(
   ui: Class[_],
-  productionMode: Boolean = true,
-  widgetset: String = "com.vaadin.DefaultWidgetSet",
-  resourceCacheTime: Int = 3600,
-  heartbeatInterval: Int = 300,
-  closeIdleSessions: Boolean = true
+  productionMode: Boolean = servletConfig.getBoolean("production-mode"),
+  widgetset: String = servletConfig.getString("widgetset"),
+  resourceCacheTime: Int = servletConfig.getInt("resource-cache-time"),
+  heartbeatInterval: Int = servletConfig.getInt("heartbeat-interval"),
+  closeIdleSessions: Boolean = servletConfig.getBoolean("close-idle-sessions")
 ) extends ScaladinServlet(
   ui, productionMode, widgetset, resourceCacheTime, heartbeatInterval, closeIdleSessions)
   with SessionInitListener with SessionDestroyListener {
