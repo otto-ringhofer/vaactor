@@ -1,12 +1,12 @@
 package org.vaadin.addons.vaactor
 
-import VaactorsSession._
+import VaactorSession._
 
 import akka.actor.{ Actor, ActorRef }
 
 import scala.collection.mutable
 
-object VaactorsSession {
+object VaactorSession {
 
   /** send current session to sender */
   case object RequestSession
@@ -22,7 +22,7 @@ object VaactorsSession {
 
 }
 
-trait VaactorsSession[S] {
+trait VaactorSession[S] {
   this: Actor =>
 
   private val uiActors = mutable.Set.empty[ActorRef]
@@ -30,7 +30,7 @@ trait VaactorsSession[S] {
   /** returns current session */
   def session: S
 
-  /** behaviour handles all messages defined in [[VaactorsSession]] */
+  /** behaviour handles all messages defined in [[VaactorSession]] */
   val sessionBehaviour: Receive = {
     case RequestSession =>
       sender ! session

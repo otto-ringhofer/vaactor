@@ -1,11 +1,11 @@
 package org.vaadin.addons.vaactor.demo
 
-import org.vaadin.addons.vaactor.VaactorsUI
+import org.vaadin.addons.vaactor.VaactorUI
 
 import vaadin.scala._
 import vaadin.scala.server.ScaladinRequest
 
-class ChatUI extends VaactorsUI {
+class ChatUI extends VaactorUI {
 
   val loginPanel = new HorizontalLayout {
     spacing = true

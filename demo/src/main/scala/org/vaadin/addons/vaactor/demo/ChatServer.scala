@@ -1,7 +1,7 @@
 package org.vaadin.addons.vaactor.demo
 
 import ChatServer._
-import org.vaadin.addons.vaactor.VaactorsServlet
+import org.vaadin.addons.vaactor.VaactorServlet
 
 import akka.actor.{ Actor, ActorRef, Props }
 
@@ -25,7 +25,7 @@ object ChatServer {
 
   case class Members(names: Seq[String])
 
-  val chatServer = VaactorsServlet.system.actorOf(Props[ServerActor], "chatServer")
+  val chatServer = VaactorServlet.system.actorOf(Props[ServerActor], "chatServer")
 
 }
 

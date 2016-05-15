@@ -2,21 +2,21 @@ package org.vaadin.addons.vaactor
 
 import javax.servlet.ServletConfig
 
-import VaactorsServlet._
+import VaactorServlet._
 import com.vaadin.server.{ SessionDestroyEvent, SessionDestroyListener, SessionInitEvent, SessionInitListener }
 
 import akka.actor.{ ActorRef, ActorSystem, PoisonPill, Props }
 import vaadin.scala.server.ScaladinServlet
 
 /** Initializes and stores the actor system */
-object VaactorsServlet {
+object VaactorServlet {
 
   /** the actor system */
   val system: ActorSystem = ActorSystem(vaactorConfig.getString("system-name"))
   val servletConfig = vaactorConfig.getConfig("servlet")
 }
 
-abstract class VaactorsServlet(
+abstract class VaactorServlet(
   ui: Class[_],
   productionMode: Boolean = servletConfig.getBoolean("production-mode"),
   widgetset: String = servletConfig.getString("widgetset"),
@@ -44,8 +44,8 @@ abstract class VaactorsServlet(
   /** register init and destroy listeners */
   override protected def servletInitialized(): Unit = {
     super.servletInitialized()
-    getService.addSessionInitListener(VaactorsServlet.this)
-    getService.addSessionDestroyListener(VaactorsServlet.this)
+    getService.addSessionInitListener(VaactorServlet.this)
+    getService.addSessionDestroyListener(VaactorServlet.this)
   }
 
   /** create session actor */

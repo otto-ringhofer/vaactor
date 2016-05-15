@@ -5,7 +5,7 @@ import vaadin.scala.server.{ ScaladinRequest, ScaladinSession }
 import vaadin.scala.{ PushMode, UI }
 
 /** UI with actors */
-abstract class VaactorsUI(title: String = null, theme: String = null, widgetset: String = null,
+abstract class VaactorUI(title: String = null, theme: String = null, widgetset: String = null,
   preserveOnRefresh: Boolean = false, pushMode: PushMode.Value = PushMode.Automatic)
   extends UI(title, theme, widgetset, preserveOnRefresh, pushMode) {
 
@@ -29,14 +29,14 @@ abstract class VaactorsUI(title: String = null, theme: String = null, widgetset:
   final override def init(request: ScaladinRequest): Unit = {
     // attach ist not called, must do it in init()
     _sessionActor = ScaladinSession.current.getAttribute(classOf[ActorRef])
-    _uiActor = VaactorsServlet.system.actorOf(Props(classOf[VaactorsUIActor], VaactorsUI.this))
-    sessionActor ! VaactorsSession.SubscribeUI
-    sessionActor ! VaactorsSession.RequestSession
+    _uiActor = VaactorServlet.system.actorOf(Props(classOf[VaactorUIActor], VaactorUI.this))
+    sessionActor ! VaactorSession.SubscribeUI
+    sessionActor ! VaactorSession.RequestSession
     initVaactorsUI(request)
   }
 
   override def detach(): Unit = {
-    sessionActor ! VaactorsSession.UnsubscribeUI
+    sessionActor ! VaactorSession.UnsubscribeUI
     self ! PoisonPill
     super.detach()
   }
@@ -55,7 +55,7 @@ abstract class VaactorsUI(title: String = null, theme: String = null, widgetset:
 
 }
 
-private class VaactorsUIActor(ui: VaactorsUI) extends Actor {
+private class VaactorUIActor(ui: VaactorUI) extends Actor {
 
   def receive = {
     // catch all messages and forward to UI
