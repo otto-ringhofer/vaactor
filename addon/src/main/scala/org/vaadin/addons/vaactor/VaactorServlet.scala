@@ -1,4 +1,4 @@
-package org.vaadin.addons.vaactors
+package org.vaadin.addons.vaactor
 
 import javax.servlet.ServletConfig
 
@@ -12,7 +12,7 @@ import vaadin.scala.server.ScaladinServlet
 object VaactorsServlet {
 
   /** the actor system */
-  val system: ActorSystem = ActorSystem("vaactors-servlet")
+  val system: ActorSystem = ActorSystem("vaactor-servlet")
 
 }
 

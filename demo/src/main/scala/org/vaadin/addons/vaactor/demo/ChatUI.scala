@@ -1,6 +1,6 @@
-package org.vaadin.addons.vaactors.demo
+package org.vaadin.addons.vaactor.demo
 
-import org.vaadin.addons.vaactors.VaactorsUI
+import org.vaadin.addons.vaactor.VaactorsUI
 
 import vaadin.scala._
 import vaadin.scala.server.ScaladinRequest

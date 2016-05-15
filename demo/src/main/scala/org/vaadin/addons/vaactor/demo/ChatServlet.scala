@@ -1,8 +1,8 @@
-package org.vaadin.addons.vaactors.demo
+package org.vaadin.addons.vaactor.demo
 
 import javax.servlet.annotation.WebServlet
 
-import org.vaadin.addons.vaactors.VaactorsServlet
+import org.vaadin.addons.vaactor.VaactorsServlet
 
 import akka.actor.Props
 

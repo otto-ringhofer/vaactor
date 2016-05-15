@@ -1,4 +1,4 @@
-package org.vaadin.addons.vaactors
+package org.vaadin.addons.vaactor
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 import vaadin.scala.server.{ ScaladinRequest, ScaladinSession }
@@ -49,7 +49,7 @@ abstract class VaactorsUI(title: String = null, theme: String = null, widgetset:
   private lazy val receiveWorker = receive orElse logUnprocessed
 
   // forward message to receive function of ui, undefined messages are forwarded to logUnprocessed
-  private[vaactors] def receiveMessage(msg: Any): Unit = access(receiveWorker(msg))
+  private[vaactor] def receiveMessage(msg: Any): Unit = access(receiveWorker(msg))
 
   def receive: Actor.Receive
 

@@ -1,7 +1,7 @@
-package org.vaadin.addons.vaactors.demo
+package org.vaadin.addons.vaactor.demo
 
 import ChatServer._
-import org.vaadin.addons.vaactors.VaactorsServlet
+import org.vaadin.addons.vaactor.VaactorsServlet
 
 import akka.actor.{ Actor, ActorRef, Props }
 

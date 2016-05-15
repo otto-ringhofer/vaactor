@@ -1,7 +1,7 @@
-package org.vaadin.addons.vaactors.demo
+package org.vaadin.addons.vaactor.demo
 
-import org.vaadin.addons.vaactors.VaactorsSession
-import org.vaadin.addons.vaactors.demo.ChatServer._
+import org.vaadin.addons.vaactor.VaactorsSession
+import org.vaadin.addons.vaactor.demo.ChatServer._
 
 import akka.actor.Actor
 

@@ -1,4 +1,4 @@
-package org.vaadin.addons.vaactors
+package org.vaadin.addons.vaactor
 
 import VaactorsSession._
 

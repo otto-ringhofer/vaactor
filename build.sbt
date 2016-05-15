@@ -1,4 +1,4 @@
-name := "Vaactors"
+name := "vaactor"
 
 organization := "org.vaadin.addons"
 
@@ -16,13 +16,13 @@ lazy val root = project.in(file(".")).aggregate(addon, demo)
 
 lazy val addon = project
   .settings(
-    name := "Vaactors",
+    name := "vaactor",
     libraryDependencies := Dependencies.addonDeps
   )
 
 lazy val demo = project
   .enablePlugins(JettyPlugin)
   .settings(
-    name := "vaactors-demo",
+    name := "vaactor-demo",
     libraryDependencies ++= Dependencies.demoDeps
   ).dependsOn(addon)
