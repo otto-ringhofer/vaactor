@@ -1,6 +1,6 @@
 package org.vaadin.addons.vaactor.demo
 
-import org.vaadin.addons.vaactor.VaactorsSession
+import org.vaadin.addons.vaactor.VaactorSession
 import org.vaadin.addons.vaactor.demo.ChatServer._
 
 import akka.actor.Actor
@@ -17,7 +17,7 @@ object ChatSession {
 
   case class Message(msg: String)
 
-  class SessionActor extends Actor with VaactorsSession[State] {
+  class SessionActor extends Actor with VaactorSession[State] {
 
     private var _session = State()
 

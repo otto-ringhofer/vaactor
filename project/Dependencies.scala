@@ -11,12 +11,14 @@ object Dependencies {
   private val servletApi = "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
   private val akkaActor = "com.typesafe.akka" %% "akka-actor" % "2.4.4"
   private val scaladin = "org.vaadin.addons" %% "scaladin" % "3.2-SNAPSHOT"
+  private val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
 
   val addonDeps = Seq(
     vaadin,
     vaadinPush,
     servletApi,
     akkaActor,
+    typesafeConfig,
     scaladin
   )
 
