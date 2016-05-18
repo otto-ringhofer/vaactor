@@ -25,7 +25,7 @@ object VaactorSession {
 trait VaactorSession[S] {
   this: Actor =>
 
-  private val uiActors = mutable.Set.empty[ActorRef]
+  private[vaactor] val uiActors = mutable.Set.empty[ActorRef]
 
   /** returns current session */
   def session: S
