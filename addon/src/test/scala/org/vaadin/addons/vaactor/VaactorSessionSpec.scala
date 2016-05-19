@@ -17,13 +17,14 @@ object VaactorSessionSpec {
   val EmptySession = TestSession("")
 
   class TestActor extends Actor with VaactorSession[TestSession] {
-    def initialSession = DefaultSession
 
-    val testBehaviour: Receive = {
+    val initialSession = DefaultSession
+
+    override val sessionBehaviour: Receive = {
       case s: TestSession => session = s
       case Crash => throw new Exception("Crash received")
     }
-    val receive = sessionBehaviour orElse testBehaviour
+
   }
 
   val testProps = Props[TestActor]
@@ -94,7 +95,7 @@ class VaactorSessionSpec extends AkkaSpec {
     actor ! EmptySession
     actor ! RequestSession
     expectMsgType[TestSession](waittime) shouldBe EmptySession
-    // actor ! Crash
+    actor ! Crash
     actor ! RequestSession
     expectMsgType[TestSession](waittime) shouldBe EmptySession
   }
