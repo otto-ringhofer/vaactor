@@ -1,13 +1,56 @@
 package org.vaadin.addons.vaactor
 
+import VaactorUI._
+
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 import vaadin.scala.server.{ ScaladinRequest, ScaladinSession }
 import vaadin.scala.{ PushMode, UI }
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
+object VaactorUI {
+
+  val uiConfig = vaactorConfig.getConfig("ui")
+
+  class Guardian extends Actor {
+
+    private var uis: Int = 0
+
+    def receive = {
+      case props: Props =>
+        uis += 1
+        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$uis"
+        sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
+    }
+
+  }
+
+  val guardian = VaactorServlet.system.actorOf(
+    Props[Guardian], uiConfig.getString("guardian-name"))
+
+  import akka.pattern.ask
+  import akka.util.Timeout
+
+  private val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
+
+  def actorOf(props: Props): ActorRef =
+    Await.result((guardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
+
+}
+
 /** UI with actors */
-abstract class VaactorUI(title: String = null, theme: String = null, widgetset: String = null,
-  preserveOnRefresh: Boolean = false, pushMode: PushMode.Value = PushMode.Automatic)
+abstract class VaactorUI(
+  title: String = null,
+  theme: String = null,
+  widgetset: String = null,
+  preserveOnRefresh: Boolean = uiConfig.getBoolean("preserve-on-refresh"),
+  pushMode: PushMode.Value = uiConfig.getString("push-mode") match {
+    case "automatic" => PushMode.Automatic
+    case "manual" => PushMode.Manual
+  })
   extends UI(title, theme, widgetset, preserveOnRefresh, pushMode) {
+  vaactorUI =>
 
   private var _sessionActor: ActorRef = _
   private var _uiActor: ActorRef = _
@@ -29,7 +72,7 @@ abstract class VaactorUI(title: String = null, theme: String = null, widgetset: 
   final override def init(request: ScaladinRequest): Unit = {
     // attach ist not called, must do it in init()
     _sessionActor = ScaladinSession.current.getAttribute(classOf[ActorRef])
-    _uiActor = VaactorServlet.system.actorOf(Props(classOf[VaactorUIActor], VaactorUI.this))
+    _uiActor = VaactorUI.actorOf(Props(classOf[VaactorUIActor], vaactorUI))
     sessionActor ! VaactorSession.SubscribeUI
     sessionActor ! VaactorSession.RequestSession
     initVaactorsUI(request)
