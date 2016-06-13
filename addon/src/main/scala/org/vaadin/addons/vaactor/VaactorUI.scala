@@ -66,16 +66,16 @@ abstract class VaactorUI(
 
   /** implement this instead of overriding [[init]] */
   // abstract, must be implemented, can't be forgotten
-  def initVaactorsUI(request: ScaladinRequest): Unit
+  def initVaactorUI(request: ScaladinRequest): Unit
 
-  /** override [[initVaactorsUI]] instead of this final function */
+  /** override [[initVaactorUI]] instead of this final function */
   final override def init(request: ScaladinRequest): Unit = {
     // attach ist not called, must do it in init()
     _sessionActor = ScaladinSession.current.getAttribute(classOf[ActorRef])
     _uiActor = VaactorUI.actorOf(Props(classOf[VaactorUIActor], vaactorUI))
     sessionActor ! VaactorSession.SubscribeUI
     sessionActor ! VaactorSession.RequestSession
-    initVaactorsUI(request)
+    initVaactorUI(request)
   }
 
   override def detach(): Unit = {
