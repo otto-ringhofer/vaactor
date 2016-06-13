@@ -50,7 +50,7 @@ abstract class VaactorServlet(
 
   /** create session actor */
   override def sessionInit(event: SessionInitEvent): Unit = {
-    val actor = system.actorOf(sessionProps)
+    val actor = VaactorSession.actorOf(sessionProps)
     event.getSession.setAttribute(classOf[ActorRef], actor)
   }
 

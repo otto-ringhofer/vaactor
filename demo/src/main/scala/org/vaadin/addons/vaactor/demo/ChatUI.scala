@@ -69,7 +69,7 @@ class ChatUI extends VaactorUI {
     nullSelectionAllowed = false
   }
 
-  override def initVaactorsUI(request: ScaladinRequest): Unit = {
+  override def initVaactorUI(request: ScaladinRequest): Unit = {
     content = new VerticalLayout {
       spacing = true
       margin = true
