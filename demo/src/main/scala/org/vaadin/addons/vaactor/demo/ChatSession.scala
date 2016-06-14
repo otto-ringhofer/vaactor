@@ -19,12 +19,10 @@ object ChatSession {
 
   class SessionActor extends Actor with VaactorSession[State] {
 
-    private var _session = State()
+    override val initialSession = State()
 
-    def session = _session
-
-    def chatBehaviour: Receive = {
-      case m @ Message(msg) =>
+    override val sessionBehaviour: Receive = {
+      case Message(msg) =>
         chatServer ! Statement(session.name, msg)
       case msg: Statement =>
         broadcast(msg)
@@ -34,10 +32,10 @@ object ChatSession {
         broadcast(msg)
       case msg: Members =>
         broadcast(msg)
-      case m @ Login(name) =>
+      case Login(name) =>
         if (!name.isEmpty) {
           // perform login
-          _session = session.copy(name = name)
+          session = session.copy(name = name)
           chatServer ! Subscribe(Client(session.name, self))
           broadcast(session)
         }
@@ -45,12 +43,10 @@ object ChatSession {
           chatServer ! RequestMembers
       case Logout =>
         chatServer ! Unsubscribe(Client(session.name, self))
-        _session = session.copy(name = "")
+        session = session.copy(name = "")
         broadcast(session)
         broadcast(Members(Nil))
     }
-
-    def receive = chatBehaviour orElse sessionBehaviour
 
   }
 
