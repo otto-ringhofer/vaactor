@@ -1,6 +1,38 @@
 package org.vaadin.addons.vaactor
 
-import akka.actor.{ Actor, Props }
+import akka.actor.{ Actor, ActorRef, Props }
+
+import scala.concurrent.Await
+import scala.concurrent.duration.{ Duration, _ }
+
+object Vaactor {
+  val vaactorConfig = config.getConfig("vaactor")
+
+  class Guardian extends Actor {
+
+    private var vaactors: Int = 0
+
+    def receive = {
+      case props: Props =>
+        vaactors += 1
+        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$vaactors"
+        sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
+    }
+
+  }
+
+  val guardian = VaactorServlet.system.actorOf(
+    Props[Guardian], vaactorConfig.getString("guardian-name"))
+
+  import akka.pattern.ask
+  import akka.util.Timeout
+
+  private val askTimeout = Timeout(vaactorConfig.getInt("ask-timeout").seconds)
+
+  def actorOf(props: Props): ActorRef =
+    Await.result((guardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
+
+}
 
 trait Vaactor {
   vaactor =>
@@ -10,7 +42,7 @@ trait Vaactor {
 
   /** actor for this Vaactor */
   // implicit injects the `self` ActorRef as sender to `!` function of `ActorRef`
-  implicit val self = VaactorUI.actorOf(Props(classOf[VaactorActor], vaactor))
+  implicit val self = Vaactor.actorOf(Props(classOf[VaactorActor], vaactor))
 
   private def logUnprocessed: Actor.Receive = {
     case msg: Any =>

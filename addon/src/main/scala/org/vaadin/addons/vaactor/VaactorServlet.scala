@@ -12,8 +12,8 @@ import vaadin.scala.server.ScaladinServlet
 object VaactorServlet {
 
   /** the actor system */
-  val system: ActorSystem = ActorSystem(vaactorConfig.getString("system-name"))
-  val servletConfig = vaactorConfig.getConfig("servlet")
+  val system: ActorSystem = ActorSystem(config.getString("system-name"))
+  val servletConfig = config.getConfig("servlet")
 }
 
 abstract class VaactorServlet(

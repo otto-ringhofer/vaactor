@@ -53,14 +53,14 @@ class VaactorUISpec extends AkkaSpec {
 
   "VaactorUI.actorOf" should "create actor with proper name" in {
     val ui = new TestUI()
-    val actor = VaactorUI.actorOf(Props(classOf[VaactorActor], ui))
-    actor.path.name should startWith("ui-VaactorActor-")
+    val actor = Vaactor.actorOf(Props(classOf[VaactorActor], ui))
+    actor.path.name should startWith("vaactor-VaactorActor-")
   }
 
 
   it should "create actor calling receive" in {
     val ui = new TestUI()
-    val actor = VaactorUI.actorOf(Props(classOf[VaactorActor], ui))
+    val actor = Vaactor.actorOf(Props(classOf[VaactorActor], ui))
     actor ! "$test" // generates UIDetachedException :-(
   }
 

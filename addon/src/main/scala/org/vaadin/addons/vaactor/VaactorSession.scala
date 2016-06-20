@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 
 object VaactorSession {
 
-  val sessionConfig = vaactorConfig.getConfig("session")
+  val sessionConfig = config.getConfig("session")
 
   class Guardian extends Actor {
 
@@ -78,7 +78,7 @@ trait VaactorSession[S] extends Stash {
     self ! InitialSession(initialSession)
   }
 
-  /** sends current session to next instance after restart */
+  /** sends current session to next instance after restart, will switch behaviour */
   override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
     self ! InitialSession(session)
   }
