@@ -49,20 +49,16 @@ abstract class VaactorUI(
     case "automatic" => PushMode.Automatic
     case "manual" => PushMode.Manual
   })
-  extends UI(title, theme, widgetset, preserveOnRefresh, pushMode) {
-  vaactorUI =>
+  extends UI(title, theme, widgetset, preserveOnRefresh, pushMode)
+    with Vaactor {
+
+  lazy val vaactorUI = this
 
   private var _sessionActor: ActorRef = _
-  private var _uiActor: ActorRef = _
 
   /** session actor for this UI */
   // lazy because of late initialization in init/attach
   lazy val sessionActor: ActorRef = _sessionActor
-
-  /** actor for this UI */
-  // implicit injects the `self` ActorRef as sender to `!` function of `ActorRef`
-  // lazy because of late initialization in init/attach
-  implicit lazy val self: ActorRef = _uiActor
 
   /** implement this instead of overriding [[init]] */
   // abstract, must be implemented, can't be forgotten
@@ -72,7 +68,6 @@ abstract class VaactorUI(
   final override def init(request: ScaladinRequest): Unit = {
     // attach ist not called, must do it in init()
     _sessionActor = ScaladinSession.current.getAttribute(classOf[ActorRef])
-    _uiActor = VaactorUI.actorOf(Props(classOf[VaactorUIActor], vaactorUI))
     sessionActor ! VaactorSession.SubscribeUI
     sessionActor ! VaactorSession.RequestSession
     initVaactorUI(request)
@@ -82,28 +77,6 @@ abstract class VaactorUI(
     sessionActor ! VaactorSession.UnsubscribeUI
     self ! PoisonPill
     super.detach()
-  }
-
-  private def logUnprocessed: Actor.Receive = {
-    case msg: Any =>
-  }
-
-  // lazy because receive is not yet initialized
-  private lazy val receiveWorker = receive orElse logUnprocessed
-
-  // forward message to receive function of ui, undefined messages are forwarded to logUnprocessed
-  private[vaactor] def receiveMessage(msg: Any): Unit = access(receiveWorker(msg))
-
-  def receive: Actor.Receive
-
-}
-
-private class VaactorUIActor(ui: VaactorUI) extends Actor {
-
-  def receive = {
-    // catch all messages and forward to UI
-    case msg: Any =>
-      ui.receiveMessage(msg)
   }
 
 }

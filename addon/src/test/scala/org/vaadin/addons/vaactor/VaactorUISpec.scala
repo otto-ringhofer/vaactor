@@ -1,15 +1,8 @@
 package org.vaadin.addons.vaactor
 
-import java.io.{ BufferedReader, InputStream }
-import java.security.Principal
-import java.util
-import java.util.Locale
-import javax.servlet.http.Cookie
-
 import VaactorUISpec._
-import com.vaadin.server.{ VaadinRequest, VaadinService, WrappedSession }
 
-import akka.actor.{ ActorRef, Props }
+import akka.actor.Props
 import vaadin.scala.PushMode
 import vaadin.scala.server.ScaladinRequest
 
@@ -29,7 +22,9 @@ object VaactorUISpec {
 
     override def initVaactorUI(request: ScaladinRequest): Unit = ???
 
-    def receive = ???
+    def receive = {
+      case a: Any => println(s"TestUI received $a")
+    }
 
   }
 
@@ -56,22 +51,17 @@ class VaactorUISpec extends AkkaSpec {
     ui.pushMode shouldBe PushMode.Manual
   }
 
-  it should "not create ui actor without call to init" in {
-    val ui = new TestUI()
-    ui.self shouldBe null
-  }
-
   "VaactorUI.actorOf" should "create actor with proper name" in {
     val ui = new TestUI()
-    val actor = VaactorUI.actorOf(Props(classOf[VaactorUIActor], ui))
-    actor.path.name should startWith("ui-VaactorUIActor-")
+    val actor = VaactorUI.actorOf(Props(classOf[VaactorActor], ui))
+    actor.path.name should startWith("ui-VaactorActor-")
   }
 
 
   it should "create actor calling receive" in {
     val ui = new TestUI()
-    val actor = VaactorUI.actorOf(Props(classOf[VaactorUIActor], ui))
-    actor ! "$test"
+    val actor = VaactorUI.actorOf(Props(classOf[VaactorActor], ui))
+    actor ! "$test" // generates UIDetachedException :-(
   }
 
 }
