@@ -88,7 +88,7 @@ class VaactorSessionSpec extends AkkaSpec {
     expectMsgType[TestSession](waittime) shouldBe DefaultSession
   }
 
-  it should "kepp session when restarted" in {
+  it should "keep session when restarted" in {
     val actor = VaactorSession.actorOf(testProps)
     actor ! RequestSession
     expectMsgType[TestSession](waittime) shouldBe DefaultSession

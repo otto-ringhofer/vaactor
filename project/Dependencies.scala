@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   private val vaadinVersion = "7.5.10"
-  private val akkaVersion = "2.4.5"
+  private val akkaVersion = "2.4.7"
 
   private val vaadin = "com.vaadin" % "vaadin-server" % vaadinVersion
   private val vaadinClientCompiled = "com.vaadin" % "vaadin-client-compiled" % vaadinVersion

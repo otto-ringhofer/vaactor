@@ -1,13 +1,6 @@
 package org.vaadin.addons.vaactor
 
-import java.io.{ BufferedReader, InputStream }
-import java.security.Principal
-import java.util
-import java.util.Locale
-import javax.servlet.http.Cookie
-
 import VaactorUISpec._
-import com.vaadin.server.{ VaadinRequest, VaadinService, WrappedSession }
 
 import akka.actor.{ ActorRef, Props }
 import vaadin.scala.PushMode
@@ -25,11 +18,17 @@ object VaactorUISpec {
 
   }
 
+  case class UiTestMsg(msg: String, probe: ActorRef)
+
   class TestUI extends VaactorUI {
 
     override def initVaactorUI(request: ScaladinRequest): Unit = ???
 
-    def receive = ???
+    def receive = {
+      case UiTestMsg(msg, probe) => probe ! msg
+    }
+
+    override def access(runnable: => Unit): Unit = runnable
 
   }
 
@@ -56,22 +55,29 @@ class VaactorUISpec extends AkkaSpec {
     ui.pushMode shouldBe PushMode.Manual
   }
 
-  it should "not create ui actor without call to init" in {
+  it should "create uiGuardian" in {
     val ui = new TestUI()
-    ui.self shouldBe null
+    ui.uiGuardian.path.name shouldBe "vaactor-UiGuardian-1"
   }
 
   "VaactorUI.actorOf" should "create actor with proper name" in {
     val ui = new TestUI()
-    val actor = VaactorUI.actorOf(Props(classOf[VaactorUIActor], ui))
-    actor.path.name should startWith("ui-VaactorUIActor-")
+    val actor = ui.actorOf(Props(classOf[VaactorActor], ui))
+    actor.path.name shouldBe "vaactor-UiGuardian-2-VaactorActor-1"
   }
 
 
   it should "create actor calling receive" in {
     val ui = new TestUI()
-    val actor = VaactorUI.actorOf(Props(classOf[VaactorUIActor], ui))
-    actor ! "$test"
+    val actor = ui.actorOf(Props(classOf[VaactorActor], ui))
+    actor ! UiTestMsg("$test", self)
+    expectMsg("$test")
+  }
+
+  it should "create self actor calling receive" in {
+    val ui = new TestUI()
+    ui.self ! UiTestMsg("$test", self)
+    expectMsg("$test")
   }
 
 }

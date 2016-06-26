@@ -5,19 +5,13 @@ import org.vaadin.addons.vaactor.VaactorUI
 import vaadin.scala._
 import vaadin.scala.server.ScaladinRequest
 
-class ChatUI extends VaactorUI {
+object ChatUI {
 
-  val loginPanel = new HorizontalLayout {
-    spacing = true
-    val text = add(new TextField())
-    add(new Button {
-      caption = "Login"
-      clickListeners += {
-        val msg = ChatSession.Login(text.value.getOrElse(""))
-        sessionActor ! msg
-      }
-    })
-  }
+  case object Clear
+
+}
+
+class ChatUI extends VaactorUI {
 
   val chatPanel = new Grid {
     caption = "Chat"
@@ -26,42 +20,7 @@ class ChatUI extends VaactorUI {
     width = 400.px
   }
 
-  val messagePanel = new HorizontalLayout {
-    spacing = true
-    val text = add(new TextField())
-    add(new Button {
-      caption = "Send"
-      clickListeners += {
-        val msg = ChatSession.Message(text.value.getOrElse(""))
-        sessionActor ! msg
-      }
-    })
-    add(new Button {
-      caption = "Clear"
-      clickListeners += { e => chatPanel.container.removeAllItems() }
-    })
-  }
-
-  val logoutBtn = new Button {
-    caption = "Logout"
-    clickListeners += {
-      val msg = ChatSession.Logout
-      sessionActor ! msg
-    }
-  }
-
-  val userPanel = new Panel {
-    content = new VerticalLayout {
-      spacing = true
-      margin = true
-      add(new HorizontalLayout {
-        spacing = true
-        add(loginPanel)
-        add(logoutBtn)
-      })
-      add(messagePanel)
-    }
-  }
+  val userPanel = new ChatComponent(this)
 
   val memberPanel = new ListSelect {
     caption = "Chatroom Members"
@@ -89,9 +48,7 @@ class ChatUI extends VaactorUI {
   def receive = {
     case state: ChatSession.State =>
       userPanel.caption = if (state.isLoggedIn) s"Session - Welcome ${ state.name }" else "Session"
-      loginPanel.enabled = !state.isLoggedIn
-      logoutBtn.enabled = state.isLoggedIn
-      messagePanel.enabled = state.isLoggedIn
+      userPanel.self ! state
     case e @ ChatServer.Enter(name) =>
       memberPanel.addItem(name)
       Notification.show(s"$name entered the chatroom")
@@ -105,6 +62,8 @@ class ChatUI extends VaactorUI {
     case m @ ChatServer.Members(members) =>
       memberPanel.removeAllItems()
       for (m <- members) memberPanel.addItem(m)
+    case ChatUI.Clear =>
+      chatPanel.container.removeAllItems()
   }
 
 }
