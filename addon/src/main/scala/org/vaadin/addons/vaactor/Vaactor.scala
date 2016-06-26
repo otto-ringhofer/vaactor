@@ -10,12 +10,12 @@ object Vaactor {
 
   class Guardian extends Actor {
 
-    private var vaactors: Int = 0
+    private var uiGuardians: Int = 0
 
     def receive = {
       case props: Props =>
-        vaactors += 1
-        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$vaactors"
+        uiGuardians += 1
+        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$uiGuardians"
         sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
     }
 
@@ -42,7 +42,7 @@ trait Vaactor {
 
   /** actor for this Vaactor */
   // implicit injects the `self` ActorRef as sender to `!` function of `ActorRef`
-  implicit val self = Vaactor.actorOf(Props(classOf[VaactorActor], vaactor))
+  implicit lazy val self = vaactorUI.actorOf(Props(classOf[VaactorActor], vaactor))
 
   private def logUnprocessed: Actor.Receive = {
     case msg: Any =>

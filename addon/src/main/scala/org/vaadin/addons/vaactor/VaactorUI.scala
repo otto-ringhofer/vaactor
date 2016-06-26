@@ -2,13 +2,34 @@ package org.vaadin.addons.vaactor
 
 import VaactorUI._
 
-import akka.actor.{ ActorRef, PoisonPill }
+import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 import vaadin.scala.server.{ ScaladinRequest, ScaladinSession }
 import vaadin.scala.{ PushMode, UI }
+
+import scala.concurrent.Await
+import scala.concurrent.duration.{ Duration, _ }
 
 object VaactorUI {
 
   val uiConfig = config.getConfig("ui")
+
+  class UiGuardian extends Actor {
+
+    private var vaactors: Int = 0
+
+    def receive = {
+      case props: Props =>
+        vaactors += 1
+        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$vaactors"
+        sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
+    }
+
+  }
+
+  import akka.util.Timeout
+
+  val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
+
 
 }
 
@@ -24,6 +45,8 @@ abstract class VaactorUI(
   })
   extends UI(title, theme, widgetset, preserveOnRefresh, pushMode)
     with Vaactor {
+
+  val uiGuardian = Vaactor.actorOf(Props(classOf[UiGuardian]))
 
   lazy val vaactorUI = this
 
@@ -49,8 +72,13 @@ abstract class VaactorUI(
 
   override def detach(): Unit = {
     sessionActor ! VaactorSession.UnsubscribeUI
-    self ! PoisonPill
+    uiGuardian ! PoisonPill // stops also all vaactor children of this guardian
     super.detach()
   }
+
+  import akka.pattern.ask
+
+  def actorOf(props: Props): ActorRef =
+    Await.result((uiGuardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
 
 }
