@@ -2,7 +2,7 @@ package org.vaadin.addons.vaactor
 
 import VaactorUISpec._
 
-import akka.actor.Props
+import akka.actor.{ ActorRef, Props }
 import vaadin.scala.PushMode
 import vaadin.scala.server.ScaladinRequest
 
@@ -18,13 +18,17 @@ object VaactorUISpec {
 
   }
 
+  case class TestMsg(msg: String, probe: ActorRef)
+
   class TestUI extends VaactorUI {
 
     override def initVaactorUI(request: ScaladinRequest): Unit = ???
 
     def receive = {
-      case a: Any => println(s"TestUI received $a")
+      case TestMsg(msg, probe) => probe ! msg
     }
+
+    override def access(runnable: => Unit): Unit = runnable
 
   }
 
@@ -53,20 +57,21 @@ class VaactorUISpec extends AkkaSpec {
 
   it should "create uiGuardian" in {
     val ui = new TestUI()
-    ui.uiGuardian.path.name should startWith("vaactor-UiGuardian-")
+    ui.uiGuardian.path.name should startWith("vaactor-UiGuardian-1")
   }
 
   "VaactorUI.actorOf" should "create actor with proper name" in {
     val ui = new TestUI()
-    val actor = Vaactor.actorOf(Props(classOf[VaactorActor], ui))
-    actor.path.name should startWith("vaactor-VaactorActor-")
+    val actor = ui.actorOf(Props(classOf[VaactorActor], ui))
+    actor.path.name should startWith("vaactor-UiGuardian-2-VaactorActor-1")
   }
 
 
   it should "create actor calling receive" in {
     val ui = new TestUI()
     val actor = Vaactor.actorOf(Props(classOf[VaactorActor], ui))
-    actor ! "$test" // generates UIDetachedException :-(
+    actor ! TestMsg("$test", self)
+    expectMsg("$test")
   }
 
 }
