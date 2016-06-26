@@ -51,6 +51,11 @@ class VaactorUISpec extends AkkaSpec {
     ui.pushMode shouldBe PushMode.Manual
   }
 
+  it should "create uiGuardian" in {
+    val ui = new TestUI()
+    ui.uiGuardian.path.name should startWith("vaactor-UiGuardian-")
+  }
+
   "VaactorUI.actorOf" should "create actor with proper name" in {
     val ui = new TestUI()
     val actor = Vaactor.actorOf(Props(classOf[VaactorActor], ui))

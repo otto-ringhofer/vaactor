@@ -46,7 +46,8 @@ abstract class VaactorUI(
   extends UI(title, theme, widgetset, preserveOnRefresh, pushMode)
     with Vaactor {
 
-  val uiGuardian = Vaactor.actorOf(Props(classOf[UiGuardian]))
+  // lazy because of DelayedInit from UI - TODO remove after removed in UI
+  lazy val uiGuardian = Vaactor.actorOf(Props(classOf[UiGuardian]))
 
   lazy val vaactorUI = this
 
