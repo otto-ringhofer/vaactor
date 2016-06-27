@@ -9,6 +9,10 @@ import vaadin.scala.{ PushMode, UI }
 import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, _ }
 
+/** contains guardian class for all vaactor-actors
+  *
+  * @author Otto Ringhofer
+  */
 object VaactorUI {
 
   val uiConfig = config.getConfig("ui")
@@ -30,10 +34,20 @@ object VaactorUI {
 
   val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
 
-
 }
 
-/** UI with actors */
+/** UI with actors
+  *
+  * contains guardian actor for all vaactor-actors
+  * is also a vaactor
+  *
+  * @param title             title of ui, default null
+  * @param theme             theme of ui, default null
+  * @param widgetset         widgetset of ui, default from servlet
+  * @param preserveOnRefresh default from configuration `preserve-on-refresh`
+  * @param pushMode          default from configuration `push-mode`
+  * @author Otto Ringhofer
+  */
 abstract class VaactorUI(
   title: String = null,
   theme: String = null,
@@ -46,9 +60,11 @@ abstract class VaactorUI(
   extends UI(title, theme, widgetset, preserveOnRefresh, pushMode)
     with Vaactor {
 
+  /** guardian actor, creates all vaactor-actors */
   // lazy because of DelayedInit from UI - TODO remove after removed in UI
   lazy val uiGuardian = Vaactor.actorOf(Props(classOf[UiGuardian]))
 
+  /** is ui of its own vaactor */
   lazy val vaactorUI = this
 
   // will be initialized in init, not possible before
@@ -79,6 +95,11 @@ abstract class VaactorUI(
 
   import akka.pattern.ask
 
+  /** create an actor as child of [[uiGuardian]]
+    *
+    * @param props Props of acctor to be created
+    * @return ActorRef of created actor
+    */
   def actorOf(props: Props): ActorRef =
     Await.result((uiGuardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
 

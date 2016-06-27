@@ -5,7 +5,12 @@ import akka.actor.{ Actor, ActorRef, Props }
 import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, _ }
 
+/** contains guardian actor for all ui-actors
+  *
+  * @author Otto Ringhofer
+  */
 object Vaactor {
+
   val vaactorConfig = config.getConfig("vaactor")
 
   class Guardian extends Actor {
@@ -21,6 +26,7 @@ object Vaactor {
 
   }
 
+  /** guardian actor, creates all ui-actors */
   val guardian = VaactorServlet.system.actorOf(
     Props[Guardian], vaactorConfig.getString("guardian-name"))
 
@@ -29,11 +35,23 @@ object Vaactor {
 
   private val askTimeout = Timeout(vaactorConfig.getInt("ask-timeout").seconds)
 
+  /** create an actor as child of [[guardian]]
+    *
+    * @param props Props of acctor to be created
+    * @return ActorRef of created actor
+    */
   def actorOf(props: Props): ActorRef =
     Await.result((guardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
 
 }
 
+/** makes a class "feel" like an actor, but synchronized with vaadin ui
+  *
+  * creates actor, assigns it to implicit `self` value
+  * `receive` is called in context of vaadin ui
+  *
+  * @author Otto Ringhofer
+  */
 trait Vaactor {
   vaactor =>
 
@@ -54,6 +72,7 @@ trait Vaactor {
   // forward message to receive function of ui, undefined messages are forwarded to logUnprocessed
   private[vaactor] def receiveMessage(msg: Any): Unit = vaactorUI.access(receiveWorker(msg))
 
+  /** receive function, is called in context of vaadin ui (via ui.access) */
   def receive: Actor.Receive
 
 }

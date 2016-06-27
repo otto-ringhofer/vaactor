@@ -8,7 +8,10 @@ import com.vaadin.server.{ SessionDestroyEvent, SessionDestroyListener, SessionI
 import akka.actor.{ ActorRef, ActorSystem, PoisonPill, Props }
 import vaadin.scala.server.ScaladinServlet
 
-/** Initializes and stores the actor system */
+/** Initializes and stores the actor system
+  *
+  * @author Otto Ringhofer
+  */
 object VaactorServlet {
 
   /** the actor system */
@@ -16,6 +19,16 @@ object VaactorServlet {
   val servletConfig = config.getConfig("servlet")
 }
 
+/** servlet creates and destroys session actors
+  *
+  * @param ui                UI class to be instantiated
+  * @param productionMode    default from configuration `production-mode`
+  * @param widgetset         default from configuration `widgetset`
+  * @param resourceCacheTime default from configuration `resource-cache-time`
+  * @param heartbeatInterval default from configuration `heartbeat-interval`
+  * @param closeIdleSessions default from configuration `close-idle-sessions`
+  * @author Otto Ringhofer
+  */
 abstract class VaactorServlet(
   ui: Class[_],
   productionMode: Boolean = servletConfig.getBoolean("production-mode"),
@@ -48,7 +61,7 @@ abstract class VaactorServlet(
     getService.addSessionDestroyListener(VaactorServlet.this)
   }
 
-  /** create session actor */
+  /** create session actor, store it in vaadin-session */
   override def sessionInit(event: SessionInitEvent): Unit = {
     val actor = VaactorSession.actorOf(sessionProps)
     event.getSession.setAttribute(classOf[ActorRef], actor)
