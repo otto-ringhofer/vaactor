@@ -6,9 +6,11 @@ import org.vaadin.addons.vaactor.VaactorServlet
 
 import akka.actor.Props
 
+/** define servlet, url pattern and ui-class to start */
 @WebServlet(urlPatterns = Array("/*"))
 class ChatServlet extends VaactorServlet(classOf[ChatUI]) {
 
+  /** define session actor to be created for every session */
   override val sessionProps: Props = Props(classOf[ChatSession.SessionActor])
 
 }
