@@ -7,6 +7,7 @@ import vaadin.scala._
 /** component handles login/logout and sending of messages
   *
   * @param vaactorUI ui to be used by [[Vaactor]], contains reference to session actor
+  * @author Otto Ringhofer
   */
 class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
 

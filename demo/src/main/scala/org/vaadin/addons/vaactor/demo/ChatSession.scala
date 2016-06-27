@@ -1,11 +1,14 @@
 package org.vaadin.addons.vaactor.demo
 
 import org.vaadin.addons.vaactor.VaactorSession
-import org.vaadin.addons.vaactor.demo.ChatServer._
+import org.vaadin.addons.vaactor.demo.ChatServer.{ Client, chatServer }
 
 import akka.actor.Actor
 
-/** contains session actor class and messages */
+/** contains session actor class and messages
+  *
+  * @author Otto Ringhofer
+  */
 object ChatSession {
 
   /** session state
@@ -40,36 +43,36 @@ object ChatSession {
     /** behaviour of session, processes received messages */
     override val sessionBehaviour: Receive = {
       // chat statement from ui, send send text and user name to chatroom
-      case Message(msg) =>
-        chatServer ! Statement(session.name, msg)
+      case ChatSession.Message(msg) =>
+        chatServer ! ChatServer.Statement(session.name, msg)
       // chat statement from chatroom, send to all registerd uis
-      case msg: Statement =>
+      case msg: ChatServer.Statement =>
         broadcast(msg)
       // user entered chatroom, send to all registered uis
-      case msg: Enter =>
+      case msg: ChatServer.Enter =>
         broadcast(msg)
       // user left chatroom, send to all registered uis
-      case msg: Leave =>
+      case msg: ChatServer.Leave =>
         broadcast(msg)
       // list of users in chatroom, send to all registered uis
-      case msg: Members =>
+      case msg: ChatServer.Members =>
         broadcast(msg)
       // user login, set state und subscribe in chatroom, send state to all rgistered uis
-      case Login(name) =>
+      case ChatSession.Login(name) =>
         if (!name.isEmpty) {
           // perform login
           session = session.copy(name = name)
-          chatServer ! Subscribe(Client(session.name, self))
+          chatServer ! ChatServer.Subscribe(Client(session.name, self))
           broadcast(session)
         }
         if (session.isLoggedIn) // is/was logged in
-          chatServer ! RequestMembers
+          chatServer ! ChatServer.RequestMembers
       // user logout, set state und unsubscribe from chatroom, send state to all rgistered uis
-      case Logout =>
-        chatServer ! Unsubscribe(Client(session.name, self))
+      case ChatSession.Logout =>
+        chatServer ! ChatServer.Unsubscribe(Client(session.name, self))
         session = session.copy(name = "")
         broadcast(session)
-        broadcast(Members(Nil))
+        broadcast(ChatServer.Members(Nil))
     }
 
   }

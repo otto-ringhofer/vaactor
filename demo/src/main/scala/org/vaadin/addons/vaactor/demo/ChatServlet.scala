@@ -6,7 +6,10 @@ import org.vaadin.addons.vaactor.VaactorServlet
 
 import akka.actor.Props
 
-/** define servlet, url pattern and ui-class to start */
+/** define servlet, url pattern and ui-class to start
+  *
+  * @author Otto Ringhofer
+  */
 @WebServlet(urlPatterns = Array("/*"))
 class ChatServlet extends VaactorServlet(classOf[ChatUI]) {
 

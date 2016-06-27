@@ -5,13 +5,21 @@ import org.vaadin.addons.vaactor.VaactorUI
 import vaadin.scala._
 import vaadin.scala.server.ScaladinRequest
 
+/** contains ui messages
+  *
+  * @author Otto Ringhofer
+  */
 object ChatUI {
 
+  /** clear message list */
   case object Clear
 
 }
 
-/** ui to be created by servlet */
+/** ui to be created by servlet
+  *
+  * @author Otto Ringhofer
+  */
 class ChatUI extends VaactorUI {
 
   /** contains list of messages from chatroom */

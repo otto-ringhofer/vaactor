@@ -6,7 +6,10 @@ import akka.actor.{ Actor, ActorRef, Props }
 
 import scala.collection.mutable
 
-/** contains ChatServer actor and messages */
+/** contains ChatServer actor and messages
+  *
+  * @author Otto Ringhofer
+  */
 object ChatServer {
 
   /** clients handled by chat room
