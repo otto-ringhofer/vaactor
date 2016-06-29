@@ -31,4 +31,10 @@ object Dependencies {
     vaadinClientCompiled,
     vaadinThemes
   )
+
+  val exampleDeps = Seq(
+    vaadinClientCompiled,
+    vaadinThemes
+  )
+
 }
