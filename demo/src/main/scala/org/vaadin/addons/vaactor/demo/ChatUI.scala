@@ -5,20 +5,24 @@ import org.vaadin.addons.vaactor.VaactorUI
 import vaadin.scala._
 import vaadin.scala.server.ScaladinRequest
 
+/** contains ui messages
+  *
+  * @author Otto Ringhofer
+  */
+object ChatUI {
+
+  /** clear message list */
+  case object Clear
+
+}
+
+/** ui to be created by servlet
+  *
+  * @author Otto Ringhofer
+  */
 class ChatUI extends VaactorUI {
 
-  val loginPanel = new HorizontalLayout {
-    spacing = true
-    val text = add(new TextField())
-    add(new Button {
-      caption = "Login"
-      clickListeners += {
-        val msg = ChatSession.Login(text.value.getOrElse(""))
-        sessionActor ! msg
-      }
-    })
-  }
-
+  /** contains list of messages from chatroom */
   val chatPanel = new Grid {
     caption = "Chat"
     addColumn[String]("User")
@@ -26,43 +30,10 @@ class ChatUI extends VaactorUI {
     width = 400.px
   }
 
-  val messagePanel = new HorizontalLayout {
-    spacing = true
-    val text = add(new TextField())
-    add(new Button {
-      caption = "Send"
-      clickListeners += {
-        val msg = ChatSession.Message(text.value.getOrElse(""))
-        sessionActor ! msg
-      }
-    })
-    add(new Button {
-      caption = "Clear"
-      clickListeners += { e => chatPanel.container.removeAllItems() }
-    })
-  }
+  /** contains user interface for login/logout and sending of messages */
+  val userPanel = new ChatComponent(this)
 
-  val logoutBtn = new Button {
-    caption = "Logout"
-    clickListeners += {
-      val msg = ChatSession.Logout
-      sessionActor ! msg
-    }
-  }
-
-  val userPanel = new Panel {
-    content = new VerticalLayout {
-      spacing = true
-      margin = true
-      add(new HorizontalLayout {
-        spacing = true
-        add(loginPanel)
-        add(logoutBtn)
-      })
-      add(messagePanel)
-    }
-  }
-
+  /** contains list of chatroom menbers */
   val memberPanel = new ListSelect {
     caption = "Chatroom Members"
     width = 100.px
@@ -87,24 +58,30 @@ class ChatUI extends VaactorUI {
   }
 
   def receive = {
+    // session state, display and send to user panel actor
     case state: ChatSession.State =>
       userPanel.caption = if (state.isLoggedIn) s"Session - Welcome ${ state.name }" else "Session"
-      loginPanel.enabled = !state.isLoggedIn
-      logoutBtn.enabled = state.isLoggedIn
-      messagePanel.enabled = state.isLoggedIn
+      userPanel.self ! state
+    // user entered chatroom, update member list
     case e @ ChatServer.Enter(name) =>
       memberPanel.addItem(name)
       Notification.show(s"$name entered the chatroom")
+    // user left chatroom, update member list
     case l @ ChatServer.Leave(name) =>
       memberPanel.removeItem(name)
       Notification.show(s"$name left the chatroom")
+    //  message from chatroom, update message list
     case s @ ChatServer.Statement(name, msg) =>
       chatPanel.addRow(name, msg)
       chatPanel.recalculateColumnWidths()
       chatPanel.scrollToEnd()
+    // member list of chatroom, update member list
     case m @ ChatServer.Members(members) =>
       memberPanel.removeAllItems()
       for (m <- members) memberPanel.addItem(m)
+    // clear, clear message list
+    case ChatUI.Clear =>
+      chatPanel.container.removeAllItems()
   }
 
 }

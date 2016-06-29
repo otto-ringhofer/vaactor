@@ -7,39 +7,47 @@ import vaadin.scala.server.{ ScaladinRequest, ScaladinSession }
 import vaadin.scala.{ PushMode, UI }
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.{ Duration, _ }
 
+/** contains guardian class for all vaactor-actors
+  *
+  * @author Otto Ringhofer
+  */
 object VaactorUI {
 
-  val uiConfig = vaactorConfig.getConfig("ui")
+  val uiConfig = config.getConfig("ui")
 
-  class Guardian extends Actor {
+  class UiGuardian extends Actor {
 
-    private var uis: Int = 0
+    private var vaactors: Int = 0
 
     def receive = {
       case props: Props =>
-        uis += 1
-        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$uis"
+        vaactors += 1
+        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$vaactors"
         sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
     }
 
   }
 
-  val guardian = VaactorServlet.system.actorOf(
-    Props[Guardian], uiConfig.getString("guardian-name"))
-
-  import akka.pattern.ask
   import akka.util.Timeout
 
-  private val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
-
-  def actorOf(props: Props): ActorRef =
-    Await.result((guardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
+  val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
 
 }
 
-/** UI with actors */
+/** UI with actors
+  *
+  * contains guardian actor for all vaactor-actors
+  * is also a vaactor
+  *
+  * @param title             title of ui, default null
+  * @param theme             theme of ui, default null
+  * @param widgetset         widgetset of ui, default from servlet
+  * @param preserveOnRefresh default from configuration `preserve-on-refresh`
+  * @param pushMode          default from configuration `push-mode`
+  * @author Otto Ringhofer
+  */
 abstract class VaactorUI(
   title: String = null,
   theme: String = null,
@@ -49,20 +57,22 @@ abstract class VaactorUI(
     case "automatic" => PushMode.Automatic
     case "manual" => PushMode.Manual
   })
-  extends UI(title, theme, widgetset, preserveOnRefresh, pushMode) {
-  vaactorUI =>
+  extends UI(title, theme, widgetset, preserveOnRefresh, pushMode)
+    with Vaactor {
 
+  /** guardian actor, creates all vaactor-actors */
+  // lazy because of DelayedInit from UI - TODO remove after removed in UI
+  lazy val uiGuardian = Vaactor.actorOf(Props(classOf[UiGuardian]))
+
+  /** is ui of its own vaactor */
+  lazy val vaactorUI = this
+
+  // will be initialized in init, not possible before
   private var _sessionActor: ActorRef = _
-  private var _uiActor: ActorRef = _
 
   /** session actor for this UI */
   // lazy because of late initialization in init/attach
   lazy val sessionActor: ActorRef = _sessionActor
-
-  /** actor for this UI */
-  // implicit injects the `self` ActorRef as sender to `!` function of `ActorRef`
-  // lazy because of late initialization in init/attach
-  implicit lazy val self: ActorRef = _uiActor
 
   /** implement this instead of overriding [[init]] */
   // abstract, must be implemented, can't be forgotten
@@ -72,7 +82,6 @@ abstract class VaactorUI(
   final override def init(request: ScaladinRequest): Unit = {
     // attach ist not called, must do it in init()
     _sessionActor = ScaladinSession.current.getAttribute(classOf[ActorRef])
-    _uiActor = VaactorUI.actorOf(Props(classOf[VaactorUIActor], vaactorUI))
     sessionActor ! VaactorSession.SubscribeUI
     sessionActor ! VaactorSession.RequestSession
     initVaactorUI(request)
@@ -80,30 +89,18 @@ abstract class VaactorUI(
 
   override def detach(): Unit = {
     sessionActor ! VaactorSession.UnsubscribeUI
-    self ! PoisonPill
+    uiGuardian ! PoisonPill // stops also all vaactor children of this guardian
     super.detach()
   }
 
-  private def logUnprocessed: Actor.Receive = {
-    case msg: Any =>
-  }
+  import akka.pattern.ask
 
-  // lazy because receive is not yet initialized
-  private lazy val receiveWorker = receive orElse logUnprocessed
-
-  // forward message to receive function of ui, undefined messages are forwarded to logUnprocessed
-  private[vaactor] def receiveMessage(msg: Any): Unit = access(receiveWorker(msg))
-
-  def receive: Actor.Receive
-
-}
-
-private class VaactorUIActor(ui: VaactorUI) extends Actor {
-
-  def receive = {
-    // catch all messages and forward to UI
-    case msg: Any =>
-      ui.receiveMessage(msg)
-  }
+  /** create an actor as child of [[uiGuardian]]
+    *
+    * @param props Props of acctor to be created
+    * @return ActorRef of created actor
+    */
+  def actorOf(props: Props): ActorRef =
+    Await.result((uiGuardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
 
 }
