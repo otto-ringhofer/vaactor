@@ -26,3 +26,10 @@ lazy val demo = project
     name := "vaactor-demo",
     libraryDependencies ++= Dependencies.demoDeps
   ).dependsOn(addon)
+
+lazy val example = project
+  .enablePlugins(JettyPlugin)
+  .settings(
+    name := "vaactor-example",
+    libraryDependencies ++= Dependencies.exampleDeps
+  ).dependsOn(addon)
