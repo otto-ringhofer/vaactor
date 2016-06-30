@@ -12,10 +12,13 @@ Vaactor requires Scaladin 3.2, Scaladin 3.2 requires Vaadin 7.5 and Scala 2.11.
 (using [sbt](http://www.scala-sbt.org/) here) (Use Akka version 2.3.15 if you need Java 6 compatibility):
 
 ```sbt
-resolvers += "Scaladin Snapshots" at "http://henrikerola.github.io/repository/snapshots/"
+resolvers ++= Seq(
+  "vaadin-addons" at "http://maven.vaadin.com/vaadin-addons",
+  "Scaladin Snapshots" at "http://henrikerola.github.io/repository/snapshots/"
+)
 
 libraryDependencies ++= Seq(
-  "org.vaadin.addons" %% "vaactor" % "0.1.0",
+  "org.vaadin.addons" % "vaactor" % "0.1.0",
   "org.vaadin.addons" %% "scaladin" % "3.2-SNAPSHOT",
   "com.vaadin" % "vaadin-server" % "7.5.10",
   "com.vaadin" % "vaadin-client-compiled" % "7.5.10",
