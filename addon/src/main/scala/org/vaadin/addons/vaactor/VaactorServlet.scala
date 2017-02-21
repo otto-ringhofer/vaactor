@@ -3,10 +3,9 @@ package org.vaadin.addons.vaactor
 import javax.servlet.ServletConfig
 
 import VaactorServlet._
-import com.vaadin.server.{ SessionDestroyEvent, SessionDestroyListener, SessionInitEvent, SessionInitListener }
+import com.vaadin.server.{ SessionDestroyEvent, SessionDestroyListener, SessionInitEvent, SessionInitListener, VaadinServlet }
 
 import akka.actor.{ ActorRef, ActorSystem, PoisonPill, Props }
-import vaadin.scala.server.ScaladinServlet
 
 /** Initializes and stores the actor system
   *
@@ -29,6 +28,7 @@ object VaactorServlet {
   * @param closeIdleSessions default from configuration `close-idle-sessions`
   * @author Otto Ringhofer
   */
+// TODO handle params
 abstract class VaactorServlet(
   ui: Class[_],
   productionMode: Boolean = servletConfig.getBoolean("production-mode"),
@@ -36,8 +36,7 @@ abstract class VaactorServlet(
   resourceCacheTime: Int = servletConfig.getInt("resource-cache-time"),
   heartbeatInterval: Int = servletConfig.getInt("heartbeat-interval"),
   closeIdleSessions: Boolean = servletConfig.getBoolean("close-idle-sessions")
-) extends ScaladinServlet(
-  ui, productionMode, widgetset, resourceCacheTime, heartbeatInterval, closeIdleSessions)
+) extends VaadinServlet
   with SessionInitListener with SessionDestroyListener {
 
   /** Props for creating a session actor for this service */

@@ -70,7 +70,7 @@ trait Vaactor {
   private lazy val receiveWorker = receive orElse logUnprocessed
 
   // forward message to receive function of ui, undefined messages are forwarded to logUnprocessed
-  private[vaactor] def receiveMessage(msg: Any): Unit = vaactorUI.access(receiveWorker(msg))
+  private[vaactor] def receiveMessage(msg: Any): Unit = vaactorUI.access(() => receiveWorker(msg))
 
   /** receive function, is called in context of vaadin ui (via ui.access) */
   def receive: Actor.Receive

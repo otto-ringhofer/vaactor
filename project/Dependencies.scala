@@ -27,12 +27,14 @@ object Dependencies {
 
   val demoDeps = Seq(
     vaadinClientCompiled,
-    vaadinThemes
+    vaadinThemes,
+    servletApi
   )
 
   val exampleDeps = Seq(
     vaadinClientCompiled,
-    vaadinThemes
+    vaadinThemes,
+    servletApi
   )
 
 }

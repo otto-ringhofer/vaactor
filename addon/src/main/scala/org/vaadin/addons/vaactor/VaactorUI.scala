@@ -1,10 +1,11 @@
 package org.vaadin.addons.vaactor
 
 import VaactorUI._
+import com.vaadin.server.{ VaadinRequest, VaadinSession }
+import com.vaadin.shared.communication.PushMode
+import com.vaadin.ui.UI
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
-import vaadin.scala.server.{ ScaladinRequest, ScaladinSession }
-import vaadin.scala.{ PushMode, UI }
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, _ }
@@ -53,12 +54,12 @@ abstract class VaactorUI(
   theme: String = null,
   widgetset: String = null,
   preserveOnRefresh: Boolean = uiConfig.getBoolean("preserve-on-refresh"),
-  pushMode: PushMode.Value = uiConfig.getString("push-mode") match {
-    case "automatic" => PushMode.Automatic
-    case "manual" => PushMode.Manual
+  pushMode: PushMode = uiConfig.getString("push-mode") match {
+    case "automatic" => PushMode.AUTOMATIC
+    case "manual" => PushMode.MANUAL
   })
-  extends UI(title, theme, widgetset, preserveOnRefresh, pushMode)
-    with Vaactor {
+// TODO handle params
+  extends UI with Vaactor {
 
   /** guardian actor, creates all vaactor-actors */
   // lazy because of DelayedInit from UI - TODO remove after removed in UI
@@ -76,12 +77,12 @@ abstract class VaactorUI(
 
   /** implement this instead of overriding [[init]] */
   // abstract, must be implemented, can't be forgotten
-  def initVaactorUI(request: ScaladinRequest): Unit
+  def initVaactorUI(request: VaadinRequest): Unit
 
   /** override [[initVaactorUI]] instead of this final function */
-  final override def init(request: ScaladinRequest): Unit = {
+  final override def init(request: VaadinRequest): Unit = {
     // attach ist not called, must do it in init()
-    _sessionActor = ScaladinSession.current.getAttribute(classOf[ActorRef])
+    _sessionActor = VaadinSession.getCurrent.getAttribute(classOf[ActorRef])
     sessionActor ! VaactorSession.SubscribeUI
     sessionActor ! VaactorSession.RequestSession
     initVaactorUI(request)
