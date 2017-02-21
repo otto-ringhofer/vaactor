@@ -2,15 +2,13 @@ name := "vaactor"
 
 organization := "org.vaadin.addons"
 
-version in ThisBuild := "0.1.0" // change also in reference.conf
+version in ThisBuild := "1.0.0-SNAPSHOT" // change also in reference.conf
 
-scalaVersion in ThisBuild := "2.11.8"
+scalaVersion in ThisBuild := "2.12.1"
 
-crossScalaVersions in ThisBuild := Seq("2.11.8")
+crossScalaVersions in ThisBuild := Seq("2.12.1")
 
 scalacOptions in ThisBuild ++= Seq("-deprecation", "-unchecked", "-feature")
-
-resolvers in ThisBuild += "Scaladin Snapshots" at "http://henrikerola.github.io/repository/snapshots/"
 
 lazy val root = project.in(file(".")).aggregate(addon, demo, example)
 
