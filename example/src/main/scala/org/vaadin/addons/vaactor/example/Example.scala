@@ -3,6 +3,7 @@ package org.vaadin.addons.vaactor.example
 import javax.servlet.annotation.WebServlet
 
 import org.vaadin.addons.vaactor.{ VaactorServlet, VaactorSession, VaactorUI }
+import com.vaadin.annotations.VaadinServletConfiguration
 import com.vaadin.server.VaadinRequest
 import com.vaadin.ui._
 import com.vaadin.ui.themes.ValoTheme
@@ -13,8 +14,13 @@ import akka.actor.{ Actor, Props }
   * @author Otto Ringhofer
   */
 
-@WebServlet(urlPatterns = Array("/*"))
-class ExampleServlet extends VaactorServlet(classOf[ExampleUI]) {
+@WebServlet(
+  urlPatterns = Array("/*"),
+  asyncSupported = true)
+@VaadinServletConfiguration(
+  productionMode = false,
+  ui = classOf[ExampleUI])
+class ExampleServlet extends VaactorServlet {
 
   override val sessionProps: Props = Props(classOf[ExampleSessionActor])
 
