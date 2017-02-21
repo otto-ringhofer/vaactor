@@ -19,17 +19,17 @@ lazy val addon = project
   )
 
 lazy val demo = project
-  .enablePlugins(TomcatPlugin)
+  .enablePlugins(JettyPlugin)
   .settings(
     name := "vaactor-demo",
-    javaOptions in Tomcat ++= Dependencies.javaOptionsInTomcat,
+    javaOptions in Jetty ++= Dependencies.javaOptionsInTomcat,
     libraryDependencies ++= Dependencies.demoDeps
   ).dependsOn(addon)
 
 lazy val example = project
-  .enablePlugins(TomcatPlugin)
+  .enablePlugins(JettyPlugin)
   .settings(
     name := "vaactor-example",
-    javaOptions in Tomcat ++= Dependencies.javaOptionsInTomcat,
+    javaOptions in Jetty ++= Dependencies.javaOptionsInTomcat,
     libraryDependencies ++= Dependencies.exampleDeps
   ).dependsOn(addon)

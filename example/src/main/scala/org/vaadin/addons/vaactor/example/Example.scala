@@ -3,8 +3,10 @@ package org.vaadin.addons.vaactor.example
 import javax.servlet.annotation.WebServlet
 
 import org.vaadin.addons.vaactor.{ VaactorServlet, VaactorSession, VaactorUI }
-import com.vaadin.annotations.VaadinServletConfiguration
+import com.vaadin.annotations.{ Push, VaadinServletConfiguration }
 import com.vaadin.server.VaadinRequest
+import com.vaadin.shared.communication.PushMode
+import com.vaadin.shared.ui.ui.Transport
 import com.vaadin.ui._
 import com.vaadin.ui.themes.ValoTheme
 
@@ -26,6 +28,7 @@ class ExampleServlet extends VaactorServlet {
 
 }
 
+@Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
 class ExampleUI extends VaactorUI {
 
   val layout = new VerticalLayout {

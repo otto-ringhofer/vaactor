@@ -1,8 +1,11 @@
 package org.vaadin.addons.vaactor.demo
 
 import org.vaadin.addons.vaactor.VaactorUI
-import com.vaadin.ui._
+import com.vaadin.annotations.Push
 import com.vaadin.server.{ Sizeable, VaadinRequest }
+import com.vaadin.shared.communication.PushMode
+import com.vaadin.shared.ui.ui.Transport
+import com.vaadin.ui._
 
 /** contains ui messages
   *
@@ -19,6 +22,7 @@ object ChatUI {
   *
   * @author Otto Ringhofer
   */
+@Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
 class ChatUI extends VaactorUI {
 
   /** contains list of messages from chatroom */

@@ -11,7 +11,7 @@ object VaactorUISpec {
 
   class ParamUI(title: String, theme: String, widgetset: String,
     preserveOnRefresh: Boolean, pushMode: PushMode)
-    extends VaactorUI(title, theme, widgetset, preserveOnRefresh, pushMode) {
+    extends VaactorUI {
 
     override def initVaactorUI(request: VaadinRequest): Unit = ???
 
