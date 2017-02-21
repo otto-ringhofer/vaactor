@@ -60,7 +60,7 @@ object ChatServer {
   case class Members(names: Seq[String])
 
   /** actorref of chatroom actor */
-  val chatServer = VaactorServlet.system.actorOf(Props[ServerActor], "chatServer")
+  val chatServer: ActorRef = VaactorServlet.system.actorOf(Props[ServerActor], "chatServer")
 
   /** actor handling chatroom */
   class ServerActor extends Actor {
@@ -69,13 +69,13 @@ object ChatServer {
     private val chatRoom = mutable.ListBuffer.empty[Client]
 
     /** process received messages */
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       // subscribe from client, add client to chatroom, send enter to all clients
-      case m @ Subscribe(client) =>
+      case Subscribe(client) =>
         chatRoom += client
         broadcast(Enter(client.name))
       // unsubscribe from client, send leave to all clients, remove client from chatroom
-      case m @ Unsubscribe(client) =>
+      case Unsubscribe(client) =>
         broadcast(Leave(client.name))
         chatRoom -= client
       // statement from client, send to all clients

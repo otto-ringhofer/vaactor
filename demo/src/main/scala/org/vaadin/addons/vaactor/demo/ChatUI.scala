@@ -56,26 +56,26 @@ class ChatUI extends VaactorUI {
     sessionActor ! ChatSession.Login()
   }
 
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     // session state, display and send to user panel actor
     case state: ChatSession.State =>
       userPanel.setCaption(if (state.isLoggedIn) s"Session - Welcome ${ state.name }" else "Session")
       userPanel.self ! state
     // user entered chatroom, update member list
-    case e @ ChatServer.Enter(name) =>
+    case ChatServer.Enter(name) =>
       // TODO memberPanel.addItem(name)
       Notification.show(s"$name entered the chatroom")
     // user left chatroom, update member list
-    case l @ ChatServer.Leave(name) =>
+    case ChatServer.Leave(name) =>
       // TODO memberPanel.removeItem(name)
       Notification.show(s"$name left the chatroom")
     //  message from chatroom, update message list
-    case s @ ChatServer.Statement(name, msg) =>
+    case ChatServer.Statement(name, msg) =>
       // TODO chatPanel.addRow(name, msg)
       // TODO chatPanel.recalculateColumnWidths()
       chatPanel.scrollToEnd()
     // member list of chatroom, update member list
-    case m @ ChatServer.Members(members) =>
+    case ChatServer.Members(members) =>
     // TODO memberPanel.removeAllItems()
     // TODO for (m <- members) memberPanel.addItem(m)
     // clear, clear message list

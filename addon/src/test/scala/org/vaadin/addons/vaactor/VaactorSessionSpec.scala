@@ -27,7 +27,7 @@ object VaactorSessionSpec {
 
   }
 
-  val testProps = Props[TestActor]
+  val testProps: Props = Props[TestActor]
 }
 
 class VaactorSessionSpec extends AkkaSpec {

@@ -68,7 +68,7 @@ class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
     })
   })
 
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     // session state, adjust user interface depending on logged-in state
     case state: ChatSession.State =>
       loginPanel.setEnabled(!state.isLoggedIn)

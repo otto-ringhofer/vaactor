@@ -1,6 +1,7 @@
 package org.vaadin.addons.vaactor
 
 import VaactorUI._
+import com.typesafe.config.Config
 import com.vaadin.server.{ VaadinRequest, VaadinSession }
 import com.vaadin.shared.communication.PushMode
 import com.vaadin.ui.UI
@@ -16,13 +17,13 @@ import scala.concurrent.duration.{ Duration, _ }
   */
 object VaactorUI {
 
-  val uiConfig = config.getConfig("ui")
+  val uiConfig: Config = config.getConfig("ui")
 
   class UiGuardian extends Actor {
 
     private var vaactors: Int = 0
 
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case props: Props =>
         vaactors += 1
         val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$vaactors"
@@ -63,10 +64,10 @@ abstract class VaactorUI(
 
   /** guardian actor, creates all vaactor-actors */
   // lazy because of DelayedInit from UI - TODO remove after removed in UI
-  lazy val uiGuardian = Vaactor.actorOf(Props(classOf[UiGuardian]))
+  lazy val uiGuardian: ActorRef = Vaactor.actorOf(Props(classOf[UiGuardian]))
 
   /** is ui of its own vaactor */
-  lazy val vaactorUI = this
+  lazy val vaactorUI: VaactorUI = this
 
   // will be initialized in init, not possible before
   private var _sessionActor: ActorRef = _

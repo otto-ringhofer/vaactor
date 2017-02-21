@@ -25,7 +25,7 @@ object VaactorUISpec {
 
     override def initVaactorUI(request: VaadinRequest): Unit = ???
 
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case UiTestMsg(msg, probe) => probe ! msg
     }
 

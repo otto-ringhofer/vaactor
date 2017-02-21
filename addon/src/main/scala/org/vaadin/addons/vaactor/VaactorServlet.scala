@@ -3,6 +3,7 @@ package org.vaadin.addons.vaactor
 import javax.servlet.ServletConfig
 
 import VaactorServlet._
+import com.typesafe.config.Config
 import com.vaadin.server.{ SessionDestroyEvent, SessionDestroyListener, SessionInitEvent, SessionInitListener, VaadinServlet }
 
 import akka.actor.{ ActorRef, ActorSystem, PoisonPill, Props }
@@ -15,7 +16,7 @@ object VaactorServlet {
 
   /** the actor system */
   val system: ActorSystem = ActorSystem(config.getString("system-name"))
-  val servletConfig = config.getConfig("servlet")
+  val servletConfig: Config = config.getConfig("servlet")
 }
 
 /** servlet creates and destroys session actors

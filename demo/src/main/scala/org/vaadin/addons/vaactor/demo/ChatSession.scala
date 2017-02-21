@@ -16,7 +16,7 @@ object ChatSession {
     * @param name name of user logged in
     */
   case class State(name: String = "") {
-    def isLoggedIn = !name.isEmpty
+    def isLoggedIn: Boolean = name.nonEmpty
   }
 
   /** login message, stores name in state
@@ -59,7 +59,7 @@ object ChatSession {
         broadcast(msg)
       // user login, set state und subscribe in chatroom, send state to all rgistered uis
       case ChatSession.Login(name) =>
-        if (!name.isEmpty) {
+        if (name.nonEmpty) {
           // perform login
           session = session.copy(name = name)
           chatServer ! ChatServer.Subscribe(Client(session.name, self))

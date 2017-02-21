@@ -1,6 +1,7 @@
 package org.vaadin.addons.vaactor
 
 import VaactorSession._
+import com.typesafe.config.Config
 
 import akka.actor.{ Actor, ActorRef, Props, Stash }
 
@@ -14,13 +15,13 @@ import scala.concurrent.duration._
   */
 object VaactorSession {
 
-  val sessionConfig = config.getConfig("session")
+  val sessionConfig: Config = config.getConfig("session")
 
   class Guardian extends Actor {
 
     private var sessions: Int = 0
 
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case props: Props =>
         sessions += 1
         val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$sessions"
@@ -42,7 +43,7 @@ object VaactorSession {
   case object UnsubscribeUI
 
   /** guardian actor, creates all session-actors */
-  val guardian = VaactorServlet.system.actorOf(
+  val guardian: ActorRef = VaactorServlet.system.actorOf(
     Props[Guardian], sessionConfig.getString("guardian-name"))
 
   import akka.pattern.ask

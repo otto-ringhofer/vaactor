@@ -29,14 +29,12 @@ class ExampleUI extends VaactorUI {
       setValue("Vaactor Example")
       addStyleName(ValoTheme.LABEL_H1)
     })
-    addComponent(new Button("Click Me", { e =>
-      vaactorUI.sessionActor ! "Thanks for clicking!"
-    }))
+    addComponent(new Button("Click Me", _ => vaactorUI.sessionActor ! "Thanks for clicking!"))
   }
 
   override def initVaactorUI(request: VaadinRequest): Unit = { setContent(layout) }
 
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     case hello: String => layout.addComponent(new Label(hello))
   }
 
