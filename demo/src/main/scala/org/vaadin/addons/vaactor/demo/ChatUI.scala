@@ -1,11 +1,15 @@
 package org.vaadin.addons.vaactor.demo
 
 import org.vaadin.addons.vaactor.VaactorUI
+import org.vaadin.addons.vaactor.demo.ChatServer.Statement
 import com.vaadin.annotations.Push
+import com.vaadin.data.provider.{ DataProvider, ListDataProvider }
 import com.vaadin.server.{ Sizeable, VaadinRequest }
 import com.vaadin.shared.communication.PushMode
 import com.vaadin.shared.ui.ui.Transport
 import com.vaadin.ui._
+
+import scala.collection.JavaConverters._
 
 /** contains ui messages
   *
@@ -26,10 +30,11 @@ object ChatUI {
 class ChatUI extends VaactorUI {
 
   /** contains list of messages from chatroom */
-  val chatPanel = new Grid {
-    setCaption("Chat")
-    // TODO addColumn[String]("User")
-    // TODO addColumn[String]("Message")
+  val chatList = new java.util.ArrayList[Statement]()
+  val chatDataProvider: ListDataProvider[Statement] = DataProvider.ofCollection[Statement](chatList)
+  val chatPanel = new Grid[Statement]("Chat", chatDataProvider) {
+    addColumn(d => d.name)
+    addColumn(d => d.msg)
     setWidth(400, Sizeable.Unit.PIXELS)
   }
 
@@ -37,10 +42,10 @@ class ChatUI extends VaactorUI {
   val userPanel = new ChatComponent(this)
 
   /** contains list of chatroom menbers */
-  val memberPanel = new ListSelect {
-    setCaption("Chatroom Members")
+  val memberList = new java.util.ArrayList[String]()
+  val memberDataProvider: ListDataProvider[String] = DataProvider.ofCollection[String](memberList)
+  val memberPanel = new ListSelect("Chatroom Members", memberDataProvider) {
     setWidth(100, Sizeable.Unit.PIXELS)
-    // TODO nullSelectionAllowed = false
   }
 
   override def initVaactorUI(request: VaadinRequest): Unit = {
@@ -67,24 +72,28 @@ class ChatUI extends VaactorUI {
       userPanel.self ! state
     // user entered chatroom, update member list
     case ChatServer.Enter(name) =>
-      // TODO memberPanel.addItem(name)
+      memberList.add(name)
+      memberPanel.setDataProvider(memberDataProvider)
       Notification.show(s"$name entered the chatroom")
     // user left chatroom, update member list
     case ChatServer.Leave(name) =>
-      // TODO memberPanel.removeItem(name)
+      memberList.remove(name)
+      memberPanel.setDataProvider(memberDataProvider)
       Notification.show(s"$name left the chatroom")
     //  message from chatroom, update message list
-    case ChatServer.Statement(name, msg) =>
-      // TODO chatPanel.addRow(name, msg)
-      // TODO chatPanel.recalculateColumnWidths()
+    case statement: ChatServer.Statement =>
+      chatList.add(statement)
+      chatPanel.setDataProvider(chatDataProvider)
       chatPanel.scrollToEnd()
     // member list of chatroom, update member list
     case ChatServer.Members(members) =>
-    // TODO memberPanel.removeAllItems()
-    // TODO for (m <- members) memberPanel.addItem(m)
+      memberList.clear()
+      memberList.addAll(members.asJava)
+      memberPanel.setDataProvider(memberDataProvider)
     // clear, clear message list
     case ChatUI.Clear =>
-    // TODO chatPanel.container.removeAllItems()
+      chatList.clear()
+      chatPanel.setDataProvider(chatDataProvider)
   }
 
 }
