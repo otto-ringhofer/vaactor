@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val vaadinVersion = "8.0.0.rc2"
+  val vaadinVersion = "8.0.0"
   val akkaVersion = "2.4.17"
 
   val vaadinServer: ModuleID = "com.vaadin" % "vaadin-server" % vaadinVersion
