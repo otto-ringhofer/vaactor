@@ -73,27 +73,27 @@ class ChatUI extends VaactorUI {
     // user entered chatroom, update member list
     case ChatServer.Enter(name) =>
       memberList.add(name)
-      memberPanel.setDataProvider(memberDataProvider)
+      memberDataProvider.refreshAll() // refreshItem operates only on changed items, not on new items
       Notification.show(s"$name entered the chatroom")
     // user left chatroom, update member list
     case ChatServer.Leave(name) =>
       memberList.remove(name)
-      memberPanel.setDataProvider(memberDataProvider)
+      memberDataProvider.refreshAll()
       Notification.show(s"$name left the chatroom")
     //  message from chatroom, update message list
     case statement: ChatServer.Statement =>
       chatList.add(statement)
-      chatPanel.setDataProvider(chatDataProvider)
+      chatDataProvider.refreshAll()
       chatPanel.scrollToEnd()
     // member list of chatroom, update member list
     case ChatServer.Members(members) =>
       memberList.clear()
       memberList.addAll(members.asJava)
-      memberPanel.setDataProvider(memberDataProvider)
+      memberDataProvider.refreshAll()
     // clear, clear message list
     case ChatUI.Clear =>
       chatList.clear()
-      chatPanel.setDataProvider(chatDataProvider)
+      chatDataProvider.refreshAll()
   }
 
 }
