@@ -1,18 +1,19 @@
 package org.vaadin.addons.vaactor
 
+
 import VaactorUISpec._
+import com.vaadin.server.VaadinRequest
+import com.vaadin.shared.communication.PushMode
 
 import akka.actor.{ ActorRef, Props }
-import vaadin.scala.PushMode
-import vaadin.scala.server.ScaladinRequest
 
 object VaactorUISpec {
 
   class ParamUI(title: String, theme: String, widgetset: String,
-    preserveOnRefresh: Boolean, pushMode: PushMode.Value)
-    extends VaactorUI(title, theme, widgetset, preserveOnRefresh, pushMode) {
+    preserveOnRefresh: Boolean, pushMode: PushMode)
+    extends VaactorUI {
 
-    override def initVaactorUI(request: ScaladinRequest): Unit = ???
+    override def initVaactorUI(request: VaadinRequest): Unit = ???
 
     def receive = ???
 
@@ -22,13 +23,13 @@ object VaactorUISpec {
 
   class TestUI extends VaactorUI {
 
-    override def initVaactorUI(request: ScaladinRequest): Unit = ???
+    override def initVaactorUI(request: VaadinRequest): Unit = ???
 
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case UiTestMsg(msg, probe) => probe ! msg
     }
 
-    override def access(runnable: => Unit): Unit = runnable
+    override def access(runnable: Runnable) = ???
 
   }
 
@@ -38,21 +39,15 @@ class VaactorUISpec extends AkkaSpec {
 
   "VaactorUI" should "set default constructor parameters" in {
     val ui = new TestUI()
-    ui.title shouldBe None
-    ui.theme shouldBe null
-    ui.widgetset shouldBe None
-    ui.preserveOnRefresh shouldBe false
-    ui.pushMode shouldBe PushMode.Automatic
+    ui.getCaption shouldBe None
+    ui.getTheme shouldBe null
   }
 
   it should "set specific constructor parameters" in {
     val ui = new ParamUI(title = "$title", theme = "$theme", widgetset = "$widgetset",
-      preserveOnRefresh = true, pushMode = PushMode.Manual)
-    ui.title shouldBe Some("$title")
-    ui.theme shouldBe "$theme"
-    ui.widgetset shouldBe Some("$widgetset")
-    ui.preserveOnRefresh shouldBe true
-    ui.pushMode shouldBe PushMode.Manual
+      preserveOnRefresh = true, pushMode = PushMode.MANUAL)
+    ui.getCaption shouldBe Some("$title")
+    ui.getTheme shouldBe "$theme"
   }
 
   it should "create uiGuardian" in {

@@ -1,9 +1,15 @@
 package org.vaadin.addons.vaactor.demo
 
 import org.vaadin.addons.vaactor.VaactorUI
+import org.vaadin.addons.vaactor.demo.ChatServer.Statement
+import com.vaadin.annotations.Push
+import com.vaadin.data.provider.{ DataProvider, ListDataProvider }
+import com.vaadin.server.{ Sizeable, VaadinRequest }
+import com.vaadin.shared.communication.PushMode
+import com.vaadin.shared.ui.ui.Transport
+import com.vaadin.ui._
 
-import vaadin.scala._
-import vaadin.scala.server.ScaladinRequest
+import scala.collection.JavaConverters._
 
 /** contains ui messages
   *
@@ -20,68 +26,74 @@ object ChatUI {
   *
   * @author Otto Ringhofer
   */
+@Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
 class ChatUI extends VaactorUI {
 
   /** contains list of messages from chatroom */
-  val chatPanel = new Grid {
-    caption = "Chat"
-    addColumn[String]("User")
-    addColumn[String]("Message")
-    width = 400.px
+  val chatList = new java.util.ArrayList[Statement]()
+  val chatDataProvider: ListDataProvider[Statement] = DataProvider.ofCollection[Statement](chatList)
+  val chatPanel = new Grid[Statement]("Chat", chatDataProvider) {
+    addColumn(d => d.name)
+    addColumn(d => d.msg)
+    setWidth(400, Sizeable.Unit.PIXELS)
   }
 
   /** contains user interface for login/logout and sending of messages */
   val userPanel = new ChatComponent(this)
 
   /** contains list of chatroom menbers */
-  val memberPanel = new ListSelect {
-    caption = "Chatroom Members"
-    width = 100.px
-    nullSelectionAllowed = false
+  val memberList = new java.util.ArrayList[String]()
+  val memberDataProvider: ListDataProvider[String] = DataProvider.ofCollection[String](memberList)
+  val memberPanel = new ListSelect("Chatroom Members", memberDataProvider) {
+    setWidth(100, Sizeable.Unit.PIXELS)
   }
 
-  override def initVaactorUI(request: ScaladinRequest): Unit = {
-    content = new VerticalLayout {
-      spacing = true
-      margin = true
-      add(new HorizontalLayout {
-        spacing = true
-        add(new VerticalLayout {
-          spacing = true
-          add(userPanel)
-          add(chatPanel)
+  override def initVaactorUI(request: VaadinRequest): Unit = {
+    setContent(new VerticalLayout {
+      setSpacing(true)
+      setMargin(true)
+      addComponent(new HorizontalLayout {
+        setSpacing(true)
+        addComponent(new VerticalLayout {
+          setSpacing(true)
+          addComponent(userPanel)
+          addComponent(chatPanel)
         })
-        add(memberPanel)
+        addComponent(memberPanel)
       })
-    }
+    })
     sessionActor ! ChatSession.Login()
   }
 
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     // session state, display and send to user panel actor
     case state: ChatSession.State =>
-      userPanel.caption = if (state.isLoggedIn) s"Session - Welcome ${ state.name }" else "Session"
+      userPanel.setCaption(if (state.isLoggedIn) s"Session - Welcome ${ state.name }" else "Session")
       userPanel.self ! state
     // user entered chatroom, update member list
-    case e @ ChatServer.Enter(name) =>
-      memberPanel.addItem(name)
+    case ChatServer.Enter(name) =>
+      memberList.add(name)
+      memberDataProvider.refreshAll() // refreshItem operates only on changed items, not on new items
       Notification.show(s"$name entered the chatroom")
     // user left chatroom, update member list
-    case l @ ChatServer.Leave(name) =>
-      memberPanel.removeItem(name)
+    case ChatServer.Leave(name) =>
+      memberList.remove(name)
+      memberDataProvider.refreshAll()
       Notification.show(s"$name left the chatroom")
     //  message from chatroom, update message list
-    case s @ ChatServer.Statement(name, msg) =>
-      chatPanel.addRow(name, msg)
-      chatPanel.recalculateColumnWidths()
+    case statement: ChatServer.Statement =>
+      chatList.add(statement)
+      chatDataProvider.refreshAll()
       chatPanel.scrollToEnd()
     // member list of chatroom, update member list
-    case m @ ChatServer.Members(members) =>
-      memberPanel.removeAllItems()
-      for (m <- members) memberPanel.addItem(m)
+    case ChatServer.Members(members) =>
+      memberList.clear()
+      memberList.addAll(members.asJava)
+      memberDataProvider.refreshAll()
     // clear, clear message list
     case ChatUI.Clear =>
-      chatPanel.container.removeAllItems()
+      chatList.clear()
+      chatDataProvider.refreshAll()
   }
 
 }

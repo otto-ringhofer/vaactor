@@ -11,7 +11,7 @@ object VaactorSpec {
 
   class TestVaactor(val vaactorUI: VaactorUI) extends Vaactor {
 
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case VaactorTestMsg(msg, probe) => probe ! msg
     }
 

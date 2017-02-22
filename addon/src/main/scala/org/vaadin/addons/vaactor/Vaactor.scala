@@ -1,5 +1,7 @@
 package org.vaadin.addons.vaactor
 
+import com.typesafe.config.Config
+
 import akka.actor.{ Actor, ActorRef, Props }
 
 import scala.concurrent.Await
@@ -11,13 +13,13 @@ import scala.concurrent.duration.{ Duration, _ }
   */
 object Vaactor {
 
-  val vaactorConfig = config.getConfig("vaactor")
+  val vaactorConfig: Config = config.getConfig("vaactor")
 
   class Guardian extends Actor {
 
     private var uiGuardians: Int = 0
 
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case props: Props =>
         uiGuardians += 1
         val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$uiGuardians"
@@ -27,7 +29,7 @@ object Vaactor {
   }
 
   /** guardian actor, creates all ui-actors */
-  val guardian = VaactorServlet.system.actorOf(
+  val guardian: ActorRef = VaactorServlet.system.actorOf(
     Props[Guardian], vaactorConfig.getString("guardian-name"))
 
   import akka.pattern.ask
@@ -60,17 +62,17 @@ trait Vaactor {
 
   /** actor for this Vaactor */
   // implicit injects the `self` ActorRef as sender to `!` function of `ActorRef`
-  implicit lazy val self = vaactorUI.actorOf(Props(classOf[VaactorActor], vaactor))
+  implicit lazy val self: ActorRef = vaactorUI.actorOf(Props(classOf[VaactorActor], vaactor))
 
   private def logUnprocessed: Actor.Receive = {
-    case msg: Any =>
+    case _ =>
   }
 
   // lazy because receive is not yet initialized
   private lazy val receiveWorker = receive orElse logUnprocessed
 
   // forward message to receive function of ui, undefined messages are forwarded to logUnprocessed
-  private[vaactor] def receiveMessage(msg: Any): Unit = vaactorUI.access(receiveWorker(msg))
+  private[vaactor] def receiveMessage(msg: Any): Unit = vaactorUI.access(() => receiveWorker(msg))
 
   /** receive function, is called in context of vaadin ui (via ui.access) */
   def receive: Actor.Receive
@@ -79,7 +81,7 @@ trait Vaactor {
 
 private class VaactorActor(vaactor: Vaactor) extends Actor {
 
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     // catch all messages and forward to UI
     case msg: Any =>
       vaactor.receiveMessage(msg)

@@ -1,8 +1,7 @@
 package org.vaadin.addons.vaactor.demo
 
 import org.vaadin.addons.vaactor.{ Vaactor, VaactorUI }
-
-import vaadin.scala._
+import com.vaadin.ui._
 
 /** component handles login/logout and sending of messages
   *
@@ -12,67 +11,69 @@ import vaadin.scala._
 class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
 
   val loginPanel = new HorizontalLayout {
-    spacing = true
-    val text = add(new TextField())
-    add(new Button {
-      caption = "Login"
+    setSpacing(true)
+    val text = new TextField()
+    addComponent(text)
+    addComponent(new Button(
+      "Login",
       // send login message to session actor
-      clickListeners += {
-        val msg = ChatSession.Login(text.value.getOrElse(""))
+      _ => {
+        val msg = ChatSession.Login(text.getValue)
         vaactorUI.sessionActor ! msg
-      }
-    })
+      })
+    )
   }
 
-  val logoutBtn = new Button {
-    caption = "Logout"
+  val logoutBtn = new Button(
+    "Logout",
     // send logout message to session actor
-    clickListeners += {
+    _ => {
       val msg = ChatSession.Logout
       vaactorUI.sessionActor ! msg
     }
-  }
+  )
 
   val messagePanel = new HorizontalLayout {
-    spacing = true
-    val text = add(new TextField())
-    add(new Button {
-      caption = "Send"
+    setSpacing(true)
+    val text = new TextField()
+    addComponent(text)
+    addComponent(new Button(
+      "Send",
       // send chat message to session actor, will be augmented with username and sent to chatroom
-      clickListeners += {
-        val msg = ChatSession.Message(text.value.getOrElse(""))
-        text.value = ""
+      _ => {
+        val msg = ChatSession.Message(text.getValue)
+        text.setValue("")
         text.focus()
         vaactorUI.sessionActor ! msg
       }
-    })
+    ))
   }
 
-  content = new VerticalLayout {
-    spacing = true
-    margin = true
-    add(new HorizontalLayout {
-      spacing = true
-      add(loginPanel)
-      add(logoutBtn)
+  setContent(new VerticalLayout {
+    setSpacing(true)
+    setMargin(true)
+    addComponent(new HorizontalLayout {
+      setSpacing(true)
+      addComponent(loginPanel)
+      addComponent(logoutBtn)
     })
-    add(new HorizontalLayout {
-      spacing = true
-      add(messagePanel)
-      add(new Button {
-        caption = "Clear"
+    addComponent(new HorizontalLayout {
+      setSpacing(true)
+      addComponent(messagePanel)
+      addComponent(new Button(
+        "Clear",
         // send clear message to ui
-        clickListeners += { vaactorUI.self ! ChatUI.Clear }
-      })
+        _ => { vaactorUI.self ! ChatUI.Clear }
+      ))
     })
-  }
+  })
 
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     // session state, adjust user interface depending on logged-in state
     case state: ChatSession.State =>
-      loginPanel.enabled = !state.isLoggedIn
-      logoutBtn.enabled = state.isLoggedIn
-      messagePanel.enabled = state.isLoggedIn
+      loginPanel.setEnabled(!state.isLoggedIn)
+      logoutBtn.setEnabled(state.isLoggedIn)
+      messagePanel.setEnabled(state.isLoggedIn)
   }
 
 }

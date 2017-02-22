@@ -10,7 +10,7 @@ abstract class AkkaSpec extends TestKit(VaactorServlet.system)
   with FlatSpecLike with BeforeAndAfterAll with Matchers with Inside
   with DefaultTimeout with ImplicitSender {
 
-  implicit val waittime = 500.millis
+  implicit val waittime: FiniteDuration = 500.millis
 
   override def afterAll {
     shutdown()
