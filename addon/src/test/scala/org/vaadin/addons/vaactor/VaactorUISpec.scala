@@ -29,7 +29,7 @@ object VaactorUISpec {
       case UiTestMsg(msg, probe) => probe ! msg
     }
 
-    // TODO should return Future<Void> override def access(runnable: Runnable): Unit = runnable.run()
+    override def access(runnable: Runnable) = ???
 
   }
 
@@ -41,9 +41,6 @@ class VaactorUISpec extends AkkaSpec {
     val ui = new TestUI()
     ui.getCaption shouldBe None
     ui.getTheme shouldBe null
-    // TODO ? ui.widgetset shouldBe None
-    // TODO ? ui.preserveOnRefresh shouldBe false
-    // TODO ? ui.pushMode shouldBe PushMode.Automatic
   }
 
   it should "set specific constructor parameters" in {
@@ -51,9 +48,6 @@ class VaactorUISpec extends AkkaSpec {
       preserveOnRefresh = true, pushMode = PushMode.MANUAL)
     ui.getCaption shouldBe Some("$title")
     ui.getTheme shouldBe "$theme"
-    // TODO ? ui.widgetset shouldBe Some("$widgetset")
-    // TODO ? ui.preserveOnRefresh shouldBe true
-    // TODO ? ui.pushMode shouldBe PushMode.Manual
   }
 
   it should "create uiGuardian" in {
