@@ -8,20 +8,20 @@ import akka.testkit.TestActorRef
 
 object VaactorSessionSpec {
 
-  case class TestSession(state: String)
+  case class TestSessionState(state: String)
 
   case object Crash
 
   val defaultSessionState = "$test$Session$"
-  val DefaultSession = TestSession(defaultSessionState)
-  val EmptySession = TestSession("")
+  val DefaultSessionState = TestSessionState(defaultSessionState)
+  val EmptySessionState = TestSessionState("")
 
-  class TestActor extends Actor with VaactorSession[TestSession] {
+  class TestActor extends Actor with VaactorSession[TestSessionState] {
 
-    val initialSession = DefaultSession
+    val initialSessionState = DefaultSessionState
 
     override val sessionBehaviour: Receive = {
-      case s: TestSession => session = s
+      case s: TestSessionState => sessionState = s
       case Crash => throw new Exception("Crash received")
     }
 
@@ -32,17 +32,17 @@ object VaactorSessionSpec {
 
 class VaactorSessionSpec extends AkkaSpec {
 
-  "VaactorSession.session" should "set and return session" in {
+  "VaactorSession.sessionState" should "set and return session state" in {
     val actor = TestActorRef[TestActor]
-    actor.underlyingActor.session shouldBe DefaultSession
-    actor.underlyingActor.session = EmptySession
-    actor.underlyingActor.session shouldBe EmptySession
+    actor.underlyingActor.sessionState shouldBe DefaultSessionState
+    actor.underlyingActor.sessionState = EmptySessionState
+    actor.underlyingActor.sessionState shouldBe EmptySessionState
   }
 
-  "VaactorSession.sessionBehaviour" should "reply session to sender on RequestSession" in {
+  "VaactorSession.sessionBehaviour" should "reply session state to sender on RequestSessionState" in {
     val actor = TestActorRef[TestActor]
-    actor ! RequestSession
-    expectMsgType[TestSession](waittime) shouldBe DefaultSession
+    actor ! RequestSessionState
+    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
   }
 
   it should "manage sender in uiActors on SubscribeUI and UnsubscribeUI" in {
@@ -56,20 +56,20 @@ class VaactorSessionSpec extends AkkaSpec {
     actor.underlyingActor.uiActors.size shouldBe 0 // sender removed
   }
 
-  it should "broadcast session on BroadcastSession" in {
+  it should "broadcast session state on BroadcastSessionState" in {
     val actor = TestActorRef[TestActor]
     actor ! SubscribeUI
-    actor ! BroadcastSession
-    expectMsgType[TestSession](waittime) shouldBe DefaultSession
+    actor ! BroadcastSessionState
+    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
   }
 
-  it should "set session on receive of Session" in {
+  it should "set session state on receive of SessionState" in {
     val actor = TestActorRef[TestActor]
-    actor ! RequestSession
-    expectMsgType[TestSession](waittime) shouldBe DefaultSession
-    actor ! EmptySession
-    actor ! RequestSession
-    expectMsgType[TestSession](waittime) shouldBe EmptySession
+    actor ! RequestSessionState
+    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
+    actor ! EmptySessionState
+    actor ! RequestSessionState
+    expectMsgType[TestSessionState](waittime) shouldBe EmptySessionState
   }
 
   "VaactorSession.broadcast" should "broadcast message to all registered Uis" in {
@@ -81,23 +81,23 @@ class VaactorSessionSpec extends AkkaSpec {
 
   "VaadinSession.actorOf" should "return restarting ActorRef" in {
     val actor = VaactorSession.actorOf(testProps)
-    actor ! RequestSession
-    expectMsgType[TestSession](waittime) shouldBe DefaultSession
+    actor ! RequestSessionState
+    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
     actor ! Crash
-    actor ! RequestSession
-    expectMsgType[TestSession](waittime) shouldBe DefaultSession
+    actor ! RequestSessionState
+    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
   }
 
-  it should "keep session when restarted" in {
+  it should "keep session state when restarted" in {
     val actor = VaactorSession.actorOf(testProps)
-    actor ! RequestSession
-    expectMsgType[TestSession](waittime) shouldBe DefaultSession
-    actor ! EmptySession
-    actor ! RequestSession
-    expectMsgType[TestSession](waittime) shouldBe EmptySession
+    actor ! RequestSessionState
+    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
+    actor ! EmptySessionState
+    actor ! RequestSessionState
+    expectMsgType[TestSessionState](waittime) shouldBe EmptySessionState
     actor ! Crash
-    actor ! RequestSession
-    expectMsgType[TestSession](waittime) shouldBe EmptySession
+    actor ! RequestSessionState
+    expectMsgType[TestSessionState](waittime) shouldBe EmptySessionState
   }
 
 }

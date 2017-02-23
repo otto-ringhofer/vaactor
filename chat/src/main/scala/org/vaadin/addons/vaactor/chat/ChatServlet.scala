@@ -1,11 +1,9 @@
-package org.vaadin.addons.vaactor.demo
+package org.vaadin.addons.vaactor.chat
 
 import javax.servlet.annotation.WebServlet
 
 import org.vaadin.addons.vaactor.VaactorServlet
 import com.vaadin.annotations.VaadinServletConfiguration
-
-import akka.actor.Props
 
 /** define servlet, url pattern and ui-class to start
   *
@@ -17,9 +15,4 @@ import akka.actor.Props
 @VaadinServletConfiguration(
   productionMode = false,
   ui = classOf[ChatUI])
-class ChatServlet extends VaactorServlet {
-
-  /** define session actor to be created for every session */
-  override val sessionProps = Some(Props(classOf[ChatSession.SessionActor]))
-
-}
+class ChatServlet extends VaactorServlet

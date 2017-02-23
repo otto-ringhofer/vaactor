@@ -13,7 +13,7 @@ object VaactorUISpec {
     preserveOnRefresh: Boolean, pushMode: PushMode)
     extends VaactorUI {
 
-    override def initVaactorUI(request: VaadinRequest): Unit = ???
+    override def init(request: VaadinRequest): Unit = ???
 
     def receive = ???
 
@@ -23,7 +23,7 @@ object VaactorUISpec {
 
   class TestUI extends VaactorUI {
 
-    override def initVaactorUI(request: VaadinRequest): Unit = ???
+    override def init(request: VaadinRequest): Unit = ???
 
     def receive: PartialFunction[Any, Unit] = {
       case UiTestMsg(msg, probe) => probe ! msg

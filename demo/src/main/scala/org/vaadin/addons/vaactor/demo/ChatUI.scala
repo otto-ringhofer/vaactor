@@ -48,7 +48,7 @@ class ChatUI extends VaactorUI {
     setWidth(100, Sizeable.Unit.PIXELS)
   }
 
-  override def initVaactorUI(request: VaadinRequest): Unit = {
+  override def init(request: VaadinRequest): Unit = {
     setContent(new VerticalLayout {
       setSpacing(true)
       setMargin(true)
@@ -62,7 +62,7 @@ class ChatUI extends VaactorUI {
         addComponent(memberPanel)
       })
     })
-    sessionActor ! ChatSession.Login()
+    send2SessionActor(ChatSession.Login())
   }
 
   def receive: PartialFunction[Any, Unit] = {

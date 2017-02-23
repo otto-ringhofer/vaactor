@@ -10,7 +10,7 @@ crossScalaVersions in ThisBuild := Seq("2.12.1")
 
 scalacOptions in ThisBuild ++= Seq("-deprecation", "-unchecked", "-feature")
 
-lazy val root = project.in(file(".")).aggregate(addon, demo, example)
+lazy val root = project.in(file(".")).aggregate(addon, demo, chat, example)
 
 lazy val addon = project
   .settings(
@@ -22,6 +22,14 @@ lazy val demo = project
   .enablePlugins(JettyPlugin)
   .settings(
     name := "vaactor-demo",
+    javaOptions in Jetty ++= Dependencies.javaOptionsInTomcat,
+    libraryDependencies ++= Dependencies.demoDeps
+  ).dependsOn(addon)
+
+lazy val chat = project
+  .enablePlugins(JettyPlugin)
+  .settings(
+    name := "vaactor-chat",
     javaOptions in Jetty ++= Dependencies.javaOptionsInTomcat,
     libraryDependencies ++= Dependencies.demoDeps
   ).dependsOn(addon)

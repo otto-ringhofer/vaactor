@@ -19,7 +19,7 @@ class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
       // send login message to session actor
       _ => {
         val msg = ChatSession.Login(text.getValue)
-        vaactorUI.sessionActor ! msg
+        vaactorUI.send2SessionActor(msg)
       })
     )
   }
@@ -29,7 +29,7 @@ class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
     // send logout message to session actor
     _ => {
       val msg = ChatSession.Logout
-      vaactorUI.sessionActor ! msg
+      vaactorUI.send2SessionActor(msg)
     }
   )
 
@@ -44,7 +44,7 @@ class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
         val msg = ChatSession.Message(text.getValue)
         text.setValue("")
         text.focus()
-        vaactorUI.sessionActor ! msg
+        vaactorUI.send2SessionActor(msg)
       }
     ))
   }
