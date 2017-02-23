@@ -37,14 +37,14 @@ object ChatSession {
   /** actor handling session state */
   class SessionActor extends Actor with VaactorSession[State] {
 
-    /** initialm value of session state */
-    override val initialSession = State()
+    /** initial value of session state */
+    override val initialSessionState = State()
 
     /** behaviour of session, processes received messages */
     override val sessionBehaviour: Receive = {
       // chat statement from ui, send send text and user name to chatroom
       case ChatSession.Message(msg) =>
-        chatServer ! ChatServer.Statement(session.name, msg)
+        chatServer ! ChatServer.Statement(sessionState.name, msg)
       // chat statement from chatroom, send to all registerd uis
       case msg: ChatServer.Statement =>
         broadcast(msg)
@@ -61,17 +61,17 @@ object ChatSession {
       case ChatSession.Login(name) =>
         if (name.nonEmpty) {
           // perform login
-          session = session.copy(name = name)
-          chatServer ! ChatServer.Subscribe(Client(session.name, self))
-          broadcast(session)
+          sessionState = sessionState.copy(name = name)
+          chatServer ! ChatServer.Subscribe(Client(sessionState.name, self))
+          broadcast(sessionState)
         }
-        if (session.isLoggedIn) // is/was logged in
+        if (sessionState.isLoggedIn) // is/was logged in
           chatServer ! ChatServer.RequestMembers
       // user logout, set state und unsubscribe from chatroom, send state to all rgistered uis
       case ChatSession.Logout =>
-        chatServer ! ChatServer.Unsubscribe(Client(session.name, self))
-        session = session.copy(name = "")
-        broadcast(session)
+        chatServer ! ChatServer.Unsubscribe(Client(sessionState.name, self))
+        sessionState = sessionState.copy(name = "")
+        broadcast(sessionState)
         broadcast(ChatServer.Members(Nil))
     }
 

@@ -73,7 +73,7 @@ abstract class VaactorUI extends UI with Vaactor {
     super.attach()
     _sessionActor = VaadinSession.getCurrent.getAttribute(classOf[Option[ActorRef]])
     send2SessionActor(VaactorSession.SubscribeUI)
-    send2SessionActor(VaactorSession.RequestSession)
+    send2SessionActor(VaactorSession.RequestSessionState)
   }
 
   override def detach(): Unit = {

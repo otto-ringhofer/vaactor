@@ -30,11 +30,11 @@ object VaactorSession {
 
   }
 
-  /** send current session to sender */
-  case object RequestSession
+  /** send current session state to sender */
+  case object RequestSessionState
 
-  /** send current session to all registered ui-actors */
-  case object BroadcastSession
+  /** send current session state to all registered ui-actors */
+  case object BroadcastSessionState
 
   /** add sender to uiActorSet */
   case object SubscribeUI
@@ -73,23 +73,23 @@ object VaactorSession {
 trait VaactorSession[S] extends Stash {
   this: Actor =>
 
-  private case class InitialSession(session: S)
+  private case class InitialSessionState(session: S)
 
-  /** returns initial value of session */
-  val initialSession: S
+  /** returns initial value of session state */
+  val initialSessionState: S
 
   /** defines behaviour of session actor */
   val sessionBehaviour: Receive
 
   private[vaactor] val uiActors = mutable.Set.empty[ActorRef]
 
-  private var _session = initialSession
+  private var _sessionState = initialSessionState
 
-  /** returns current session */
-  def session: S = _session
+  /** returns current session state */
+  def sessionState: S = _sessionState
 
-  /** sets current session */
-  def session_=(s: S): Unit = _session = s
+  /** sets current session state */
+  def sessionState_=(s: S): Unit = _sessionState = s
 
   /** send message to all ui-actors in this session
     *
@@ -97,14 +97,14 @@ trait VaactorSession[S] extends Stash {
     */
   def broadcast(msg: Any): Unit = for (ui <- uiActors) ui ! msg
 
-  /** initialize session, will switch behaviour */
+  /** initialize session state, will switch behaviour */
   override def preStart(): Unit = {
-    self ! InitialSession(initialSession)
+    self ! InitialSessionState(initialSessionState)
   }
 
-  /** sends current session to next instance after restart, will switch behaviour */
+  /** sends current session state to next instance after restart, will switch behaviour */
   override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
-    self ! InitialSession(session)
+    self ! InitialSessionState(sessionState)
   }
 
   /** inhibits call to preStart during restart */
@@ -112,20 +112,20 @@ trait VaactorSession[S] extends Stash {
 
   /** behaviour handles all messages defined in [[VaactorSession]] */
   val vaactorSessionBehaviour: Receive = {
-    case RequestSession =>
-      sender ! session
-    case BroadcastSession =>
-      broadcast(session)
+    case RequestSessionState =>
+      sender ! sessionState
+    case BroadcastSessionState =>
+      broadcast(sessionState)
     case SubscribeUI =>
       uiActors += sender
     case UnsubscribeUI =>
       uiActors -= sender
   }
 
-  /** initial behaviour, receives initial session */
+  /** initial behaviour, receives initial session state */
   final val receive: Receive = {
-    case InitialSession(s) =>
-      session = s
+    case InitialSessionState(s) =>
+      sessionState = s
       context.become(sessionBehaviour orElse vaactorSessionBehaviour)
       unstashAll()
     case _ =>

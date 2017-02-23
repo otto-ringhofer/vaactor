@@ -2,6 +2,7 @@ package org.vaadin.addons.vaactor.example
 
 import javax.servlet.annotation.WebServlet
 
+import ExampleObject._
 import org.vaadin.addons.vaactor.{ VaactorServlet, VaactorSession, VaactorUI }
 import com.vaadin.annotations.{ Push, VaadinServletConfiguration }
 import com.vaadin.server.VaadinRequest
@@ -15,6 +16,10 @@ import akka.actor.{ Actor, Props }
 /**
   * @author Otto Ringhofer
   */
+
+object ExampleObject {
+  var globalCnt = 0
+}
 
 @WebServlet(
   urlPatterns = Array("/*"),
@@ -31,6 +36,8 @@ class ExampleServlet extends VaactorServlet {
 @Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
 class ExampleUI extends VaactorUI {
 
+  var uiCnt = 0
+
   val layout = new VerticalLayout {
     setMargin(true)
     setSpacing(true)
@@ -38,25 +45,31 @@ class ExampleUI extends VaactorUI {
       setValue("Vaactor Example")
       addStyleName(ValoTheme.LABEL_H1)
     })
-    addComponent(new Button("Click Me", _ => vaactorUI.send2SessionActor("Thanks for clicking!")))
+    addComponent(new Button("Click Me", { _ =>
+      uiCnt += 1
+      vaactorUI.send2SessionActor(s"Thanks for clicking! (uiCnt:$uiCnt)")
+    })
+    )
   }
 
   override def init(request: VaadinRequest): Unit = { setContent(layout) }
 
   def receive: PartialFunction[Any, Unit] = {
-    case hello: String => layout.addComponent(new Label(hello))
+    case hello: String =>
+      globalCnt += 1
+      layout.addComponent(new Label(s"$hello (globalCnt:$globalCnt)"))
   }
 
 }
 
-class ExampleSessionActor extends Actor with VaactorSession[String] {
+class ExampleSessionActor extends Actor with VaactorSession[Int] {
 
-  override val initialSession = ""
+  override val initialSessionState = 0
 
   override val sessionBehaviour: Receive = {
-    case name: String =>
-      session = name
-      sender ! s"Session received: $session"
+    case msg: String =>
+      sessionState += 1
+      sender ! s"$msg (sessionCnt:$sessionState)"
   }
 
 }
