@@ -41,7 +41,7 @@ class ExampleUI extends VaactorUI {
     addComponent(new Button("Click Me", _ => vaactorUI.send2SessionActor("Thanks for clicking!")))
   }
 
-  override def initVaactorUI(request: VaadinRequest): Unit = { setContent(layout) }
+  override def init(request: VaadinRequest): Unit = { setContent(layout) }
 
   def receive: PartialFunction[Any, Unit] = {
     case hello: String => layout.addComponent(new Label(hello))

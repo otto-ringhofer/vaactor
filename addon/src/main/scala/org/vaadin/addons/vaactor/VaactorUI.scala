@@ -2,7 +2,7 @@ package org.vaadin.addons.vaactor
 
 import VaactorUI._
 import com.typesafe.config.Config
-import com.vaadin.server.{ VaadinRequest, VaadinSession }
+import com.vaadin.server.VaadinSession
 import com.vaadin.ui.UI
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
@@ -69,17 +69,11 @@ abstract class VaactorUI extends UI with Vaactor {
     case None => _ => {}
   }
 
-  /** implement this instead of overriding [[init]] */
-  // abstract, must be implemented, can't be forgotten
-  def initVaactorUI(request: VaadinRequest): Unit
-
-  /** override [[initVaactorUI]] instead of this final function */
-  final override def init(request: VaadinRequest): Unit = {
-    // attach ist not called, must do it in init()
+  override def attach(): Unit = {
+    super.attach()
     _sessionActor = VaadinSession.getCurrent.getAttribute(classOf[Option[ActorRef]])
     send2SessionActor(VaactorSession.SubscribeUI)
     send2SessionActor(VaactorSession.RequestSession)
-    initVaactorUI(request)
   }
 
   override def detach(): Unit = {
