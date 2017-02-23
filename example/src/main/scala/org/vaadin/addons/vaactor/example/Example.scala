@@ -24,7 +24,7 @@ import akka.actor.{ Actor, Props }
   ui = classOf[ExampleUI])
 class ExampleServlet extends VaactorServlet {
 
-  override val sessionProps: Props = Props(classOf[ExampleSessionActor])
+  override val sessionProps: Option[Props] = Some(Props(classOf[ExampleSessionActor]))
 
 }
 
@@ -38,7 +38,7 @@ class ExampleUI extends VaactorUI {
       setValue("Vaactor Example")
       addStyleName(ValoTheme.LABEL_H1)
     })
-    addComponent(new Button("Click Me", _ => vaactorUI.sessionActor ! "Thanks for clicking!"))
+    addComponent(new Button("Click Me", _ => vaactorUI.send2SessionActor("Thanks for clicking!")))
   }
 
   override def initVaactorUI(request: VaadinRequest): Unit = { setContent(layout) }

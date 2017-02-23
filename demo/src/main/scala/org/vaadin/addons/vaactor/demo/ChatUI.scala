@@ -62,7 +62,7 @@ class ChatUI extends VaactorUI {
         addComponent(memberPanel)
       })
     })
-    sessionActor ! ChatSession.Login()
+    send2SessionActor(ChatSession.Login())
   }
 
   def receive: PartialFunction[Any, Unit] = {

@@ -20,6 +20,6 @@ import akka.actor.Props
 class ChatServlet extends VaactorServlet {
 
   /** define session actor to be created for every session */
-  override val sessionProps: Props = Props(classOf[ChatSession.SessionActor])
+  override val sessionProps = Some(Props(classOf[ChatSession.SessionActor]))
 
 }

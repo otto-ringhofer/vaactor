@@ -52,12 +52,22 @@ abstract class VaactorUI extends UI with Vaactor {
   /** is ui of its own vaactor */
   val vaactorUI: VaactorUI = this
 
-  // will be initialized in init, not possible before
-  private var _sessionActor: ActorRef = _
+  // will be initialized in init/attach, not possible before
+  private var _sessionActor: Option[ActorRef] = None
 
   /** session actor for this UI */
   // lazy because of late initialization in init/attach
-  lazy val sessionActor: ActorRef = _sessionActor
+  lazy val sessionActor: Option[ActorRef] = _sessionActor
+
+  /** Send a message to the session actor.
+    *
+    * No message is sent, if [[VaactorServlet.sessionProps]] is None
+    */
+  // lazy because of late initialization in init/attach
+  lazy val send2SessionActor: Any => Unit = sessionActor match {
+    case Some(actor) => actor ! _
+    case None => _ => {}
+  }
 
   /** implement this instead of overriding [[init]] */
   // abstract, must be implemented, can't be forgotten
@@ -66,14 +76,14 @@ abstract class VaactorUI extends UI with Vaactor {
   /** override [[initVaactorUI]] instead of this final function */
   final override def init(request: VaadinRequest): Unit = {
     // attach ist not called, must do it in init()
-    _sessionActor = VaadinSession.getCurrent.getAttribute(classOf[ActorRef])
-    sessionActor ! VaactorSession.SubscribeUI
-    sessionActor ! VaactorSession.RequestSession
+    _sessionActor = VaadinSession.getCurrent.getAttribute(classOf[Option[ActorRef]])
+    send2SessionActor(VaactorSession.SubscribeUI)
+    send2SessionActor(VaactorSession.RequestSession)
     initVaactorUI(request)
   }
 
   override def detach(): Unit = {
-    sessionActor ! VaactorSession.UnsubscribeUI
+    send2SessionActor(VaactorSession.UnsubscribeUI)
     uiGuardian ! PoisonPill // stops also all vaactor children of this guardian
     super.detach()
   }

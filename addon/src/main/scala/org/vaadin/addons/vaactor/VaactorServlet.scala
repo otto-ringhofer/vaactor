@@ -25,7 +25,7 @@ abstract class VaactorServlet extends VaadinServlet
   with SessionInitListener with SessionDestroyListener {
 
   /** Props for creating a session actor for this service */
-  val sessionProps: Props
+  val sessionProps: Option[Props] = None
 
   /** log init */
   override def init(servletConfig: ServletConfig): Unit = {
@@ -47,14 +47,14 @@ abstract class VaactorServlet extends VaadinServlet
 
   /** create session actor, store it in vaadin-session */
   override def sessionInit(event: SessionInitEvent): Unit = {
-    val actor = VaactorSession.actorOf(sessionProps)
-    event.getSession.setAttribute(classOf[ActorRef], actor)
+    val actor = sessionProps map { VaactorSession.actorOf }
+    event.getSession.setAttribute(classOf[Option[ActorRef]], actor)
   }
 
   /** stop session actor */
   override def sessionDestroy(event: SessionDestroyEvent): Unit = {
-    val actor = event.getSession.getAttribute(classOf[ActorRef])
-    if (actor != null) actor ! PoisonPill
+    val actor = event.getSession.getAttribute(classOf[Option[ActorRef]])
+    actor foreach { _ ! PoisonPill }
   }
 
 }
