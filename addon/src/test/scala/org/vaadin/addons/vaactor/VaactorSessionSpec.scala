@@ -3,101 +3,184 @@ package org.vaadin.addons.vaactor
 import VaactorSessionSpec._
 import org.vaadin.addons.vaactor.VaactorSession._
 
-import akka.actor.{ Actor, Props }
-import akka.testkit.TestActorRef
+import akka.actor._
+import akka.testkit._
 
 object VaactorSessionSpec {
 
-  case class TestSessionState(state: String)
+  case class SessionState(state: String)
 
   case object Crash
 
-  val defaultSessionState = "$test$Session$"
-  val DefaultSessionState = TestSessionState(defaultSessionState)
-  val EmptySessionState = TestSessionState("")
+  val InitialState = SessionState("Hello")
+  val ChangedState = SessionState("Changed")
 
-  class TestActor extends Actor with VaactorSession[TestSessionState] {
-
-    val initialSessionState = DefaultSessionState
-
+  class SessionActor extends Actor with VaactorSession[SessionState] {
+    override val initialSessionState: SessionState = InitialState
     override val sessionBehaviour: Receive = {
-      case s: TestSessionState => sessionState = s
-      case Crash => throw new Exception("Crash received")
+      case ns: SessionState => sessionState = ns
+      case Crash => throw new UnsupportedOperationException(Crash.toString)
     }
-
   }
 
-  val testProps: Props = Props[TestActor]
+  def kill(actor: ActorRef): Unit = actor ! PoisonPill
+
+
 }
 
 class VaactorSessionSpec extends AkkaSpec {
 
-  "VaactorSession.sessionState" should "set and return session state" in {
-    val actor = TestActorRef[TestActor]
-    actor.underlyingActor.sessionState shouldBe DefaultSessionState
-    actor.underlyingActor.sessionState = EmptySessionState
-    actor.underlyingActor.sessionState shouldBe EmptySessionState
+  "object VaactorSession" - {
+    "guardian" - {
+      "must not be null" in {
+        VaactorSession.guardian should not be null
+      }
+      "must respond to Props Message with ActorRef with correct path" in {
+        VaactorSession.guardian ! TestActors.echoActorProps
+        val ref = expectMsgType[ActorRef](waittime)
+        ref.path.toStringWithoutAddress should startWith("/user/session/session-EchoActor-")
+        kill(ref)
+      }
+
+    }
+    "actorOf" - {
+      "must create actor with correct path supervised by guardian" in {
+        val ref = VaactorSession.actorOf(TestActors.echoActorProps)
+        ref.path.toStringWithoutAddress should startWith("/user/session/session-EchoActor-")
+        kill(ref)
+      }
+    }
   }
 
-  "VaactorSession.sessionBehaviour" should "reply session state to sender on RequestSessionState" in {
-    val actor = TestActorRef[TestActor]
-    actor ! RequestSessionState
-    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
-  }
-
-  it should "manage sender in uiActors on SubscribeUI and UnsubscribeUI" in {
-    val actor = TestActorRef[TestActor]
-    actor.underlyingActor.uiActors.size shouldBe 0 // initially empty
-    actor ! SubscribeUI
-    actor.underlyingActor.uiActors.size shouldBe 1 // sender added
-    actor ! SubscribeUI
-    actor.underlyingActor.uiActors.size shouldBe 1 // no duplicates
-    actor ! UnsubscribeUI
-    actor.underlyingActor.uiActors.size shouldBe 0 // sender removed
-  }
-
-  it should "broadcast session state on BroadcastSessionState" in {
-    val actor = TestActorRef[TestActor]
-    actor ! SubscribeUI
-    actor ! BroadcastSessionState
-    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
-  }
-
-  it should "set session state on receive of SessionState" in {
-    val actor = TestActorRef[TestActor]
-    actor ! RequestSessionState
-    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
-    actor ! EmptySessionState
-    actor ! RequestSessionState
-    expectMsgType[TestSessionState](waittime) shouldBe EmptySessionState
-  }
-
-  "VaactorSession.broadcast" should "broadcast message to all registered Uis" in {
-    val actor = TestActorRef[TestActor]
-    actor ! SubscribeUI
-    actor.underlyingActor.broadcast(defaultSessionState)
-    expectMsgType[String](waittime) shouldBe defaultSessionState
-  }
-
-  "VaadinSession.actorOf" should "return restarting ActorRef" in {
-    val actor = VaactorSession.actorOf(testProps)
-    actor ! RequestSessionState
-    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
-    actor ! Crash
-    actor ! RequestSessionState
-    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
-  }
-
-  it should "keep session state when restarted" in {
-    val actor = VaactorSession.actorOf(testProps)
-    actor ! RequestSessionState
-    expectMsgType[TestSessionState](waittime) shouldBe DefaultSessionState
-    actor ! EmptySessionState
-    actor ! RequestSessionState
-    expectMsgType[TestSessionState](waittime) shouldBe EmptySessionState
-    actor ! Crash
-    actor ! RequestSessionState
-    expectMsgType[TestSessionState](waittime) shouldBe EmptySessionState
+  "trait VaactorSession - SessionActor extends VaactorSession" - {
+    "Creation" - {
+      "must be created with correct name by VaactorSession.actorOf" in {
+        val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
+        sa.path.toStringWithoutAddress should startWith("/user/session/session-SessionActor-")
+        kill(sa)
+      }
+    }
+    "SessionState handling" - {
+      "sessionState must write and read state" in {
+        val sa = TestActorRef[SessionActor]
+        sa.underlyingActor.sessionState shouldBe InitialState
+        sa.underlyingActor.sessionState = ChangedState
+        sa.underlyingActor.sessionState shouldBe ChangedState
+        kill(sa)
+      }
+      "must initialize state and respond to RequestSessionState with initialState" in {
+        val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
+        sa ! RequestSessionState
+        expectMsgType[SessionState](waittime) shouldBe InitialState
+        lastSender shouldBe self
+        kill(sa)
+      }
+      "must restart after crash and respond to RequestSessionState with initialState" in {
+        val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
+        sa ! Crash
+        sa ! RequestSessionState
+        expectMsgType[SessionState](waittime) shouldBe InitialState
+        lastSender shouldBe self
+        kill(sa)
+      }
+      "must set ChangedState and respond to RequestSessionState with ChangedState" in {
+        val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
+        sa ! ChangedState
+        sa ! RequestSessionState
+        expectMsgType[SessionState](waittime) shouldBe ChangedState
+        lastSender shouldBe self
+        kill(sa)
+      }
+      "muss restart after crash and respond to RequestSessionState with ChangedState" in {
+        val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
+        sa ! ChangedState
+        sa ! Crash
+        sa ! RequestSessionState
+        expectMsgType[SessionState](waittime) shouldBe ChangedState
+        lastSender shouldBe self
+        kill(sa)
+      }
+    }
+    "Subscriber handling" - {
+      "must manage sender in subscribers on Subscribe and Unsubscribe" in {
+        val sa = TestActorRef[SessionActor]
+        val tp = TestProbe()
+        val subscribers = sa.underlyingActor.subscribers
+        subscribers.size shouldBe 0 // initially empty
+        sa ! Subscribe
+        subscribers.size shouldBe 1 // sender added
+        subscribers.contains(self) shouldBe true
+        sa ! Subscribe
+        subscribers.size shouldBe 1 // no duplicates
+        subscribers.contains(self) shouldBe true
+        sa ! Subscribe(tp.ref)
+        subscribers.size shouldBe 2 // testprobe added
+        subscribers.contains(self) shouldBe true
+        subscribers.contains(tp.ref) shouldBe true
+        sa ! Unsubscribe
+        subscribers.size shouldBe 1 // sender removed
+        subscribers.contains(self) shouldBe false
+        subscribers.contains(tp.ref) shouldBe true
+        sa ! Unsubscribe(tp.ref)
+        subscribers.size shouldBe 0 // sender removed
+        kill(sa)
+      }
+      "must send current session state to all subscribers on BroadcastSessionState" in {
+        val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
+        val tp = TestProbe()
+        sa ! Subscribe
+        sa ! BroadcastSessionState
+        expectMsgType[SessionState](waittime) shouldBe InitialState
+        lastSender shouldBe self
+        sa ! Subscribe(tp.ref)
+        sa ! ChangedState
+        sa ! BroadcastSessionState
+        expectMsgType[SessionState](waittime) shouldBe ChangedState
+        lastSender shouldBe self
+        tp.expectMsgType[SessionState](waittime) shouldBe ChangedState
+        tp.lastSender shouldBe self
+        kill(sa)
+      }
+      "must send message to all subscribers on Broadcast(msg)" in {
+        val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
+        val tp = TestProbe()
+        val msg = "Hi"
+        sa ! Subscribe
+        sa ! Subscribe(tp.ref)
+        sa ! Broadcast(msg)
+        expectMsgType[String](waittime) shouldBe msg
+        lastSender shouldBe self
+        tp.expectMsgType[String](waittime) shouldBe msg
+        tp.lastSender shouldBe self
+        kill(sa)
+      }
+    }
+    "WithSession handling" - {
+      "ForwardWithSession must forward WithSession to desired receiver" in {
+        val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
+        val tp = TestProbe()
+        val msg = "Hi"
+        sa ! ForwardWithSession(tp.ref, msg)
+        val a: WithSession[SessionState, String] = tp.expectMsgType[WithSession[SessionState, String]](waittime)
+        a.session shouldBe InitialState
+        a.msg shouldBe msg
+        tp.lastSender shouldBe self
+        kill(sa)
+      }
+      "BroadcastWithSession must forward WithSession to all subscribers" in {
+        val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
+        val tp = TestProbe()
+        val msg = "Hi"
+        sa ! Subscribe
+        sa ! Subscribe(tp.ref)
+        sa ! BroadcastWithSession(msg)
+        expectMsgType[WithSession[SessionState, String]](waittime) shouldBe WithSession(InitialState, msg)
+        lastSender shouldBe self
+        tp.expectMsgType[WithSession[SessionState, String]](waittime) shouldBe WithSession(InitialState, msg)
+        tp.lastSender shouldBe self
+        kill(sa)
+      }
+    }
   }
 
 }

@@ -36,7 +36,7 @@ object VaactorUISpec {
 }
 
 class VaactorUISpec extends AkkaSpec {
-
+/*
   "VaactorUI" should "set default constructor parameters" in {
     val ui = new TestUI()
     ui.getCaption shouldBe None
@@ -74,5 +74,5 @@ class VaactorUISpec extends AkkaSpec {
     ui.self ! UiTestMsg("$test", self)
     expectMsg("$test")
   }
-
+*/
 }

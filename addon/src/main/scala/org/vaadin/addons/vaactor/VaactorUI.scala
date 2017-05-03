@@ -72,12 +72,12 @@ abstract class VaactorUI extends UI with Vaactor {
   override def attach(): Unit = {
     super.attach()
     _sessionActor = VaadinSession.getCurrent.getAttribute(classOf[Option[ActorRef]])
-    send2SessionActor(VaactorSession.SubscribeUI)
+    send2SessionActor(VaactorSession.Subscribe)
     send2SessionActor(VaactorSession.RequestSessionState)
   }
 
   override def detach(): Unit = {
-    send2SessionActor(VaactorSession.UnsubscribeUI)
+    send2SessionActor(VaactorSession.Unsubscribe)
     uiGuardian ! PoisonPill // stops also all vaactor children of this guardian
     super.detach()
   }

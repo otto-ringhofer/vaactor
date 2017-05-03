@@ -20,7 +20,7 @@ object VaactorSpec {
 }
 
 class VaactorSpec extends AkkaSpec {
-
+/*
   "Vaactor" should "create self actor" in {
     val ui = new TestUI()
     val va = new TestVaactor(ui)
@@ -33,5 +33,5 @@ class VaactorSpec extends AkkaSpec {
     va.self ! VaactorTestMsg("$test", self)
     expectMsg("$test")
   }
-
+*/
 }
