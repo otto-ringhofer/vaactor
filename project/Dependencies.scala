@@ -2,44 +2,76 @@ import sbt._
 
 object Dependencies {
 
-  val vaadinVersion = "8.0.0"
-  val akkaVersion = "2.4.17"
+  val vaadinVersion = "8.0.5"
+  val servletapiVersion = "3.1.0"
+  val slf4jVersion = "1.7.25"
+  val configVersion = "1.3.1"
+  val akkaVersion = "2.5.0"
+  val scalatestVersion = "3.0.1"
+  val seleniumVersion = "3.4.0"
 
-  val vaadinServer: ModuleID = "com.vaadin" % "vaadin-server" % vaadinVersion
-  val vaadinClientCompiled: ModuleID = "com.vaadin" % "vaadin-client-compiled" % vaadinVersion
-  val vaadinThemes: ModuleID = "com.vaadin" % "vaadin-themes" % vaadinVersion
-  val vaadinPush: ModuleID = "com.vaadin" % "vaadin-push" % vaadinVersion
-  val servletApi: ModuleID = "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
-  val akkaActor: ModuleID = "com.typesafe.akka" %% "akka-actor" % akkaVersion
-  val typesafeConfig: ModuleID = "com.typesafe" % "config" % "1.3.1"
-  val scalatest: ModuleID = "org.scalatest" % "scalatest_2.11" % "3.0.1" % "test"
-  val akkaTestkit: ModuleID = "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test"
+  val akkaOrg = "com.typesafe.akka"
+  val slf4jOrg = "org.slf4j"
+  val vaadinOrg = "com.vaadin"
+
+  val servletApi: ModuleID = "javax.servlet" % "javax.servlet-api" % servletapiVersion % "provided"
+  val config: ModuleID = "com.typesafe" % "config" % configVersion
+  val vaadinServer: ModuleID = vaadinOrg % "vaadin-server" % vaadinVersion
+  val vaadinClientCompiled: ModuleID = vaadinOrg % "vaadin-client-compiled" % vaadinVersion
+  val vaadinThemes: ModuleID = vaadinOrg % "vaadin-themes" % vaadinVersion
+  val vaadinPush: ModuleID = vaadinOrg % "vaadin-push" % vaadinVersion
+  val slf4j: ModuleID = slf4jOrg % "slf4j-api" % slf4jVersion % "provided"
+  val slf4jSimple: ModuleID = slf4jOrg % "slf4j-simple" % slf4jVersion
+  val akkaActor: ModuleID = akkaOrg %% "akka-actor" % akkaVersion
+  val akkaSlf4j: ModuleID = akkaOrg %% "akka-slf4j" % akkaVersion
+  val akkaRemote: ModuleID = akkaOrg %% "akka-remote" % akkaVersion
+  val scalactic: ModuleID = "org.scalactic" %% "scalactic" % scalatestVersion % "test"
+  val scalatest: ModuleID = "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+  val akkaTestkit: ModuleID = akkaOrg %% "akka-testkit" % akkaVersion % "test"
+  val seleniumJava: ModuleID = "org.seleniumhq.selenium" % "selenium-java" % seleniumVersion % "test"
 
   val addonDeps = Seq(
+    config,
+    akkaActor,
+    slf4j,
+    akkaSlf4j,
     vaadinServer,
     vaadinPush,
     servletApi,
-    akkaActor,
-    typesafeConfig,
+    scalactic,
     scalatest,
     akkaTestkit
   )
 
   val demoDeps = Seq(
+    servletApi,
+    slf4jSimple,
     vaadinClientCompiled,
-    vaadinThemes,
-    servletApi
+    vaadinThemes
+  )
+
+  val chatDeps = Seq(
+    servletApi,
+    slf4jSimple,
+    vaadinClientCompiled,
+    vaadinThemes
   )
 
   val exampleDeps = Seq(
+    servletApi,
+    slf4jSimple,
     vaadinClientCompiled,
-    vaadinThemes,
-    servletApi
+    vaadinThemes
   )
 
-  val javaOptionsInTomcat = Seq(
-    "-Xdebug",
-    "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
+  val testDeps = Seq(
+    servletApi,
+    akkaRemote,
+    slf4jSimple,
+    scalactic,
+    scalatest,
+    akkaTestkit,
+    seleniumJava
   )
 
 }
