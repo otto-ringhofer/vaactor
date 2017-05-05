@@ -12,9 +12,8 @@ object Forwarder {
   val ForwarderName = "forwarder-actor"
   val SessionActorName = "session-actor"
   val UIActorName = "ui-actor"
-  val SVActorActorName = "svactor-actor"
+  val VaactorActorName = "vaactor-actor"
   val TestActorName = "test-actor"
-  val RemoteToolsGuardianName = "remote-toolsGuardian"
 
   val forwarder: ActorRef = VaactorServlet.system.actorOf(Props[ForwardActor], "forwarder")
 

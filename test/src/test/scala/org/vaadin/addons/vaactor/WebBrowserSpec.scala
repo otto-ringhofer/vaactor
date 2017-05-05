@@ -1,11 +1,9 @@
 package org.vaadin.addons.vaactor
 
-import akka.actor.ActorRef
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.scalatest.selenium.WebBrowser
 import org.scalatest.time.{ Seconds, Span }
-import Forwarder.{ Register, TestActorName }
 
 abstract class WebBrowserSpec extends AkkaSpec with WebBrowser {
 
@@ -19,10 +17,8 @@ abstract class WebBrowserSpec extends AkkaSpec with WebBrowser {
   go to Host // Remote Service initialisieren
 
   val LocalSysstemPath = "akka://test-client"
-  val RemoteSystemPath = "akka.tcp://test-service@127.0.0.1:2552"
-  val ForwarderPath: String = RemoteSystemPath + "/user/tools/forwarder"
-// todo  val forwarder: ActorRef = VaactorServlet.lookupActor(ForwarderPath).get
-// todo  forwarder ! Register(TestActorName)
+  val RemoteSystemPath = "akka.tcp://test-server@127.0.0.1:2552"
+  val ForwarderPath: String = RemoteSystemPath + "/user/forwarder"
 
   override def afterAll {
     super.afterAll

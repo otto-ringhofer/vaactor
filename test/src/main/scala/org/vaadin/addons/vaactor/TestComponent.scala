@@ -34,7 +34,7 @@ class TestComponent(val vaactorUI: VaactorUI, nameSuffix: String)
 
   override def attach(): Unit = {
     super.attach()
-    forwarder.tell(Register(SVActorActorName + nameSuffix), self)
+    forwarder.tell(Register(VaactorActorName + nameSuffix), self)
   }
 
   override def receive: Receive = {
