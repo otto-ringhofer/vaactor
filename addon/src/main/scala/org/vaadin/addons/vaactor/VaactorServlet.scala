@@ -3,9 +3,10 @@ package org.vaadin.addons.vaactor
 import javax.servlet.ServletConfig
 
 import VaactorServlet._
+import VaactorVaadinSession._
 import com.vaadin.server.{ SessionDestroyEvent, SessionDestroyListener, SessionInitEvent, SessionInitListener, VaadinServlet }
 
-import akka.actor.{ ActorRef, ActorSystem, PoisonPill, Props }
+import akka.actor.{ ActorSystem, Props }
 
 /** Initializes and stores the actor system
   *
@@ -15,6 +16,7 @@ object VaactorServlet {
 
   /** the actor system */
   val system: ActorSystem = ActorSystem(config.getString("system-name"))
+
 }
 
 /** servlet creates and destroys session actors
@@ -46,15 +48,11 @@ abstract class VaactorServlet extends VaadinServlet
   }
 
   /** create session actor, store it in vaadin-session */
-  override def sessionInit(event: SessionInitEvent): Unit = {
-    val actor = sessionProps map { VaactorSession.actorOf }
-    event.getSession.setAttribute(classOf[Option[ActorRef]], actor)
-  }
+  override def sessionInit(event: SessionInitEvent): Unit =
+    createAndStoreSessionActor(sessionProps, event.getSession)
 
   /** stop session actor */
-  override def sessionDestroy(event: SessionDestroyEvent): Unit = {
-    val actor = event.getSession.getAttribute(classOf[Option[ActorRef]])
-    actor foreach { _ ! PoisonPill }
-  }
+  override def sessionDestroy(event: SessionDestroyEvent): Unit =
+    lookupAndTerminateSessionActor(event.getSession)
 
 }

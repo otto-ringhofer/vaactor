@@ -10,7 +10,7 @@ import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, _ }
 
-/** contains guardian class for all vaactor-actors
+/** Contains guardian class for all vaactor-actors
   *
   * @author Otto Ringhofer
   */
@@ -22,11 +22,11 @@ object VaactorUI {
 
     private var vaactors: Int = 0
 
-    def receive: PartialFunction[Any, Unit] = {
+    def receive: Receive = {
       case props: Props =>
         vaactors += 1
         val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$vaactors"
-        sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
+        sender ! context.actorOf(props, name) // create new child actor
     }
 
   }
@@ -46,7 +46,7 @@ object VaactorUI {
   */
 abstract class VaactorUI extends UI with Vaactor {
 
-  /** guardian actor, creates all vaactor-actors */
+  /** Guardian actor, creates all vaactor-actors */
   val uiGuardian: ActorRef = Vaactor.actorOf(Props(classOf[UiGuardian]))
 
   /** is ui of its own vaactor */
@@ -55,7 +55,7 @@ abstract class VaactorUI extends UI with Vaactor {
   // will be initialized in init/attach, not possible before
   private var _sessionActor: Option[ActorRef] = None
 
-  /** session actor for this UI */
+  /** Session actor for this UI */
   // lazy because of late initialization in init/attach
   lazy val sessionActor: Option[ActorRef] = _sessionActor
 
@@ -71,7 +71,7 @@ abstract class VaactorUI extends UI with Vaactor {
 
   override def attach(): Unit = {
     super.attach()
-    _sessionActor = VaadinSession.getCurrent.getAttribute(classOf[Option[ActorRef]])
+    _sessionActor = VaactorVaadinSession.lookupSessionActor(VaadinSession.getCurrent)
     send2SessionActor(VaactorSession.Subscribe)
     send2SessionActor(VaactorSession.RequestSessionState)
   }
@@ -84,7 +84,7 @@ abstract class VaactorUI extends UI with Vaactor {
 
   import akka.pattern.ask
 
-  /** create an actor as child of [[uiGuardian]]
+  /** Create an actor as child of [[uiActor]]
     *
     * @param props Props of acctor to be created
     * @return ActorRef of created actor

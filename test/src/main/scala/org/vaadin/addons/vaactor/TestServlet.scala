@@ -16,7 +16,7 @@ object TestServlet {
 
   class SessionActor extends Actor with VaactorSession[SessionState] {
 
-    override val initialSessionState: SessionState = SessionState("")
+    override val initialSessionState: SessionState = EmptySessionState
 
     override val sessionBehaviour: Receive = {
       case sst: SessionState => sessionState = sst
