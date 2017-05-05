@@ -17,7 +17,7 @@ class VaactorServletSpec extends WebBrowserSpec {
 
   "remote ActorSystem should be configured" - {
     "should access remote forwarder actor" in {
-      VaactorServlet.system.actorSelection(ForwarderPath) ! Identify("quaxi")
+      VaactorServlet.system.actorSelection(ForwarderPath) ! Identify("")
       val id = expectMsgType[ActorIdentity]
       id.ref should not be None
       id.ref.get.path.toString shouldBe ForwarderPath
