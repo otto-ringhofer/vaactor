@@ -6,7 +6,7 @@ object Dependencies {
   val servletapiVersion = "3.1.0"
   val slf4jVersion = "1.7.25"
   val configVersion = "1.3.1"
-  val akkaVersion = "2.5.0"
+  val akkaVersion = "2.5.1"
   val scalatestVersion = "3.0.1"
   val seleniumVersion = "3.4.0"
 
@@ -30,6 +30,13 @@ object Dependencies {
   val akkaTestkit: ModuleID = akkaOrg %% "akka-testkit" % akkaVersion % "test"
   val seleniumJava: ModuleID = "org.seleniumhq.selenium" % "selenium-java" % seleniumVersion % "test"
 
+  val vaadinServletDeps = Seq(
+    servletApi,
+    slf4jSimple,
+    vaadinClientCompiled,
+    vaadinThemes
+  )
+
   val addonDeps = Seq(
     config,
     akkaActor,
@@ -43,35 +50,19 @@ object Dependencies {
     akkaTestkit
   )
 
-  val demoDeps = Seq(
-    servletApi,
-    slf4jSimple,
-    vaadinClientCompiled,
-    vaadinThemes
-  )
 
-  val chatDeps = Seq(
-    servletApi,
-    slf4jSimple,
-    vaadinClientCompiled,
-    vaadinThemes
-  )
+  val demoDeps: Seq[ModuleID] = vaadinServletDeps
 
-  val exampleDeps = Seq(
-    servletApi,
-    slf4jSimple,
-    vaadinClientCompiled,
-    vaadinThemes
-  )
+  val chatDeps: Seq[ModuleID] = vaadinServletDeps
 
-  val testDeps = Seq(
-    servletApi,
+  val exampleDeps: Seq[ModuleID] = vaadinServletDeps
+
+  val testDeps: Seq[ModuleID] = Seq(
     akkaRemote,
-    slf4jSimple,
     scalactic,
     scalatest,
     akkaTestkit,
     seleniumJava
-  )
+  ) ++ vaadinServletDeps
 
 }

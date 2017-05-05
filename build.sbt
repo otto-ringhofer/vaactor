@@ -14,9 +14,9 @@ lazy val root = project.in(file("."))
         "test" ::
         "project test" ::
         "jetty:start" ::
-        "testOnly at.co.sdt.vaadin.VaactorServletSpec" ::
-        "testOnly at.co.sdt.vaadin.VaactorUISpec" ::
-        "testOnly at.co.sdt.vaadin.VaactorSpec" ::
+        "testOnly org.vaadin.addons.vaactor.VaactorServletSpec" ::
+        "testOnly org.vaadin.addons.vaactor.VaactorUISpec" ::
+        "testOnly org.vaadin.addons.vaactor.VaactorSpec" ::
         "jetty:stop" ::
         "project root" ::
         state
@@ -55,6 +55,6 @@ lazy val test = (project in file("test"))
   .enablePlugins(JettyPlugin)
   .settings(
     name := "vaactor-test",
-    libraryDependencies ++= Dependencies.exampleDeps,
+    libraryDependencies ++= Dependencies.testDeps,
     parallelExecution in Test := false
   ).dependsOn(addon)
