@@ -10,7 +10,7 @@ import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, _ }
 
-/** Contains guardian class for all vaactor-actors
+/** Contains guardian class instantiated for all VaactorUIs
   *
   * @author Otto Ringhofer
   */
@@ -18,6 +18,11 @@ object VaactorUI {
 
   val uiConfig: Config = config.getConfig("ui")
 
+  /** UI Guardian actor.
+    *
+    * Creates and supervises all VaactorActors.
+    * Is instatiated for each [[VaactorUI]].
+    */
   class UiGuardian extends Actor {
 
     private var vaactors: Int = 0
@@ -63,11 +68,7 @@ abstract class VaactorUI extends UI with Vaactor {
     *
     * No message is sent, if [[VaactorServlet.sessionProps]] is None
     */
-  // lazy because of late initialization in init/attach
-  lazy val send2SessionActor: Any => Unit = sessionActor match {
-    case Some(actor) => actor ! _
-    case None => _ => {}
-  }
+  def send2SessionActor(msg: Any): Unit = sessionActor foreach { _ ! msg }
 
   override def attach(): Unit = {
     super.attach()
@@ -84,7 +85,7 @@ abstract class VaactorUI extends UI with Vaactor {
 
   import akka.pattern.ask
 
-  /** Create an actor as child of [[uiActor]]
+  /** Create an actor as child of [[uiGuardian]]
     *
     * @param props Props of acctor to be created
     * @return ActorRef of created actor
