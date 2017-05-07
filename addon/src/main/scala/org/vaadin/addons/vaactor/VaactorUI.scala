@@ -10,20 +10,53 @@ import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, _ }
 
-/** Contains guardian class instantiated for all VaactorUIs
+/** Creates ui guardian actor as supervisor for all ui actors.
+  *
+  * Contains ui-actor class instantiated for all VaactorUIs
   *
   * @author Otto Ringhofer
   */
 object VaactorUI {
 
+  /** UiGuardian, creates and supervises all ui actors */
+  class UiGuardian extends Actor {
+
+    private var uis: Int = 0
+
+    def receive: PartialFunction[Any, Unit] = {
+      case props: Props =>
+        uis += 1
+        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$uis"
+        sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
+    }
+
+  }
+
+  /** `ui`-subtree of Vaactor configuration */
   val uiConfig: Config = config.getConfig("ui")
 
-  /** UI Guardian actor.
+  /** [[UiGuardian]] actor, creates all ui-actors */
+  val guardian: ActorRef = VaactorServlet.system.actorOf(
+    Props[UiGuardian], uiConfig.getString("guardian-name"))
+
+  import akka.pattern.ask
+  import akka.util.Timeout
+
+  private val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
+
+  /** create an actor as child of [[guardian]]
     *
-    * Creates and supervises all VaactorActors.
-    * Is instatiated for each [[VaactorUI]].
+    * @param props Props of acctor to be created
+    * @return ActorRef of created actor
     */
-  class UiGuardian extends Actor {
+  def actorOf(props: Props): ActorRef =
+    Await.result((guardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
+
+  /** UiActor, creates and supervises all VaactorActors.
+    *
+    * Is instatiated once for each [[VaactorUI]].
+    */
+  class UiActor extends Actor {
 
     private var vaactors: Int = 0
 
@@ -35,10 +68,6 @@ object VaactorUI {
     }
 
   }
-
-  import akka.util.Timeout
-
-  val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
 
 }
 
@@ -52,7 +81,7 @@ object VaactorUI {
 abstract class VaactorUI extends UI with Vaactor {
 
   /** Guardian actor, creates all vaactor-actors */
-  val uiGuardian: ActorRef = Vaactor.actorOf(Props(classOf[UiGuardian]))
+  val uiActor: ActorRef = VaactorUI.actorOf(Props(classOf[UiActor]))
 
   /** is ui of its own vaactor */
   val vaactorUI: VaactorUI = this
@@ -79,18 +108,18 @@ abstract class VaactorUI extends UI with Vaactor {
 
   override def detach(): Unit = {
     send2SessionActor(VaactorSession.Unsubscribe)
-    uiGuardian ! PoisonPill // stops also all vaactor children of this guardian
+    uiActor ! PoisonPill // stops also all vaactor children of this guardian
     super.detach()
   }
 
   import akka.pattern.ask
 
-  /** Create an actor as child of [[uiGuardian]]
+  /** Create an actor as child of [[uiActor]]
     *
     * @param props Props of acctor to be created
     * @return ActorRef of created actor
     */
   def actorOf(props: Props): ActorRef =
-    Await.result((uiGuardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
+    Await.result((uiActor ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
 
 }

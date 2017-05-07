@@ -160,7 +160,7 @@ class VaactorSessionSpec extends AkkaSpec {
         val sa: ActorRef = VaactorSession.actorOf(Props[SessionActor])
         val tp = TestProbe()
         val msg = "Hi"
-        sa ! ForwardWithSession(tp.ref, msg)
+        sa ! ForwardWithSession(msg, tp.ref)
         val a: WithSession[SessionState, String] = tp.expectMsgType[WithSession[SessionState, String]](waittime)
         a.session shouldBe InitialState
         a.msg shouldBe msg

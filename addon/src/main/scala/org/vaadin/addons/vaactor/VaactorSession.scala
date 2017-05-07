@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 
 /** Vaadin session management with actors.
   *
-  * Creates guardian actor as supervisor for all session-actors
+  * Creates session guardian actor as supervisor for all session actors.
   *
   * Defines messages used by trait [[VaactorSession]].
   *
@@ -21,8 +21,8 @@ object VaactorSession {
 
   protected case class InitialSessionState[S](session: S)
 
-  /** Guardian Actor, creates and supervises all session actors */
-  class Guardian extends Actor {
+  /** SessionGuardian, creates and supervises all session actors */
+  class SessionGuardian extends Actor {
 
     private var sessions: Int = 0
 
@@ -40,7 +40,7 @@ object VaactorSession {
 
   /** Marker trait for all messages processed by [[VaactorSession.vaactorSessionBehaviour]].
     *
-    * All messages implementing this trait are defined in object [[VaactorSession]].
+    * All messages implementing this sealed trait are defined in object [[VaactorSession]].
     */
   sealed trait VaactorSessionMessage
 
@@ -77,11 +77,11 @@ object VaactorSession {
 
   /** Send [[WithSession]] message to receiver
     *
-    * @param receiver desired receiver of WithSession message
     * @param msg      message to be wrapped in WithSession
+    * @param receiver desired receiver of WithSession message
     * @tparam T type of message
     */
-  case class ForwardWithSession[T](receiver: ActorRef, msg: T) extends VaactorSessionMessage
+  case class ForwardWithSession[T](msg: T, receiver: ActorRef) extends VaactorSessionMessage
 
   /** Send [[WithSession]] message to all registered subscriberes
     *
@@ -100,9 +100,9 @@ object VaactorSession {
     */
   case class WithSession[S, T](session: S, msg: T)
 
-  /** Guardian actor, creates all session-actors */
+  /** [[SessionGuardian]] actor, creates all session-actors */
   val guardian: ActorRef = VaactorServlet.system.actorOf(
-    Props[Guardian], sessionConfig.getString("guardian-name"))
+    Props[SessionGuardian], sessionConfig.getString("guardian-name"))
 
   import akka.pattern.ask
   import akka.util.Timeout
@@ -179,7 +179,7 @@ trait VaactorSession[S] extends Stash {
     case vaactorSessionMessage: VaactorSessionMessage => vaactorSessionMessage match {
       case RequestSessionState =>
         sender.forward(sessionState)
-      case ForwardWithSession(receiver, msg) =>
+      case ForwardWithSession(msg, receiver) =>
         receiver.forward(WithSession(sessionState, msg))
       case BroadcastSessionState =>
         broadcast(sessionState, sender)
