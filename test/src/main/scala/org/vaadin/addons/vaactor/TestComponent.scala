@@ -19,7 +19,7 @@ object TestComponent {
 }
 
 class TestComponent(val vaactorUI: VaactorUI, nameSuffix: String)
-  extends VerticalLayout with Vaactor {
+  extends VerticalLayout with VaactorComponent {
 
   val txt = new TextField()
   txt.setWidth("100%")

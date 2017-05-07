@@ -25,7 +25,7 @@ class VaactorSpec extends WebBrowserSpec {
       val reg = expectMsgType[Registered]
       reg.name shouldBe VaactorActorName
       reg.actor.path.toString should startWith(RemoteSystemPath + "/user/ui/ui-UiActor-")
-      reg.actor.path.toString should include("-VaactorActor-")
+      reg.actor.path.toString should include("-VaactorProxyActor-")
     }
   }
 
@@ -56,7 +56,7 @@ class VaactorSpec extends WebBrowserSpec {
   }
 
   "remote VaactorComponentActor should" - {
-    "be created and terminated" ignore { // todo
+    "be created and terminated" in {
       val testContent = "$Quaxi-dyn"
       click on AddComponentButtonName
       forwarder ! Lookup(VaactorActorName + NameSuffix)

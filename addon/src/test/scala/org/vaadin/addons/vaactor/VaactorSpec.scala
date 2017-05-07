@@ -20,18 +20,16 @@ object VaactorSpec {
 }
 
 class VaactorSpec extends AkkaSpec {
-/*
-  "Vaactor" should "create self actor" in {
-    val ui = new TestUI()
-    val va = new TestVaactor(ui)
-    va.self.path.name shouldBe "vaactor-UiGuardian-1-VaactorActor-1"
+
+  "Vaactor should" - {
+    "create self actor" in {
+      val ui = new TestUI()
+      val va = new TestVaactor(ui)
+      va.self.path.name should startWith("ui-UiActor-")
+      va.self.path.name should include("-VaactorProxyActor-")
+    }
   }
 
-  it should "create actor calling receive" in {
-    val ui = new TestUI()
-    val va = new TestVaactor(ui)
-    va.self ! VaactorTestMsg("$test", self)
-    expectMsg("$test")
-  }
-*/
 }
+
+

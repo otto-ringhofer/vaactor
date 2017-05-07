@@ -9,7 +9,7 @@ abstract class AkkaSpec extends TestKit(VaactorServlet.system)
 
   override def afterAll = {
     super.afterAll
-    VaactorServlet.system.terminate()
+    //    VaactorServlet.system.terminate()
   }
 
 }
