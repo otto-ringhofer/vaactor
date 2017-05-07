@@ -9,10 +9,10 @@ import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 object Vaactor {
 
   /** Proxy actor for [[Vaactor]],
-    * calls [[Vaactor.receiveMessage]] of dedicated [[Vaactor]] wirh all messages received.
+    * calls [[Vaactor.receiveMessage]] of dedicated [[Vaactor]] with every message received.
     *
     * [[Vaactor.receiveMessage]] calls [[Vaactor.receive]] function
-    * synchronized by `access` method of dedicated [[Vaactor]].
+    * synchronized by `access` method of dedicated [[Vaactor.vaactorUI]].
     *
     * @param vaactor dedicated [[Vaactor]]
     */
@@ -52,8 +52,13 @@ trait Vaactor {
     */
   def sender: ActorRef = _sender
 
-  // forward message to receive function of ui, undefined messages are forwarded to logUnprocessed
-  private[vaactor] def receiveMessage(msg: Any, sender: ActorRef): Unit = {
+  /** Call [[receive]] of this trait synchronized by VaactorUI.access.
+    * Is used by [[Vaactor.VaactorProxyActor]] to forward received messages to this trait.
+    *
+    * @param msg    message
+    * @param sender sender of message
+    */
+  def receiveMessage(msg: Any, sender: ActorRef): Unit = {
     _sender = sender
     vaactorUI.access(() => receive(msg))
     _sender = Actor.noSender
