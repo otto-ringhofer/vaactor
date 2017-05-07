@@ -112,7 +112,8 @@ abstract class VaactorUI extends UI {
     * @param msg    message to be sent
     * @param sender sender of message
     */
-  def send2SessionActor(msg: Any, sender: ActorRef = Actor.noSender): Unit = sessionActor foreach { _.tell(msg, sender) }
+  def send2SessionActor(msg: Any, sender: ActorRef = Actor.noSender): Unit =
+    sessionActor foreach { _.tell(msg, sender) }
 
   override def attach(): Unit = {
     super.attach()

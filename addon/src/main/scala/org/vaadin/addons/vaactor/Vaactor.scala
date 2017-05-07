@@ -67,6 +67,14 @@ trait Vaactor {
   /** Receive function, is called in context of VaadinUI (via ui.access) */
   def receive: Actor.Receive
 
+  /** Send a message to the session actor.
+    *
+    * No message is sent, if [[VaactorServlet.sessionProps]] is None
+    *
+    * @param msg message to be sent
+    */
+  def send2SessionActor(msg: Any): Unit = vaactorUI.send2SessionActor(msg, self)
+
 }
 
 /** Vaadin component with dedicated actor.

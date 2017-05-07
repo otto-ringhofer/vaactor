@@ -27,7 +27,7 @@ class TestComponent(val vaactorUI: VaactorUI, nameSuffix: String)
 
   val btn = new Button("Send to Session" + nameSuffix)
   btn.setId(CompButtonName + nameSuffix)
-  btn.addClickListener { _ => vaactorUI.send2SessionActor(TestServlet.SessionState(txt.getValue)) }
+  btn.addClickListener { _ => send2SessionActor(TestServlet.SessionState(txt.getValue)) }
 
   setCaption("TestComponent" + nameSuffix)
   addComponents(txt, btn)
