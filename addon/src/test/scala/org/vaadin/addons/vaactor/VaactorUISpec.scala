@@ -47,7 +47,9 @@ class VaactorUISpec extends AkkaSpec {
     "must manage sender in subscribers on Subscribe and Unsubscribe" in {
       val uia = TestActorRef[VaactorUI.UiActor]
       val tp = TestProbe()
-      val subscribers = uia.underlyingActor.subscribers
+
+      def subscribers = uia.underlyingActor.subscribers
+
       subscribers.size shouldBe 0 // initially empty
       uia ! Subscribe
       subscribers.size shouldBe 1 // sender added

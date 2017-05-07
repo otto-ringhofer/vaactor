@@ -8,7 +8,6 @@ import com.vaadin.ui.UI
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 
-import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, _ }
 
@@ -62,7 +61,7 @@ object VaactorUI {
     */
   class UiActor extends Actor {
 
-    private[vaactor] val subscribers = mutable.Set.empty[ActorRef]
+    private[vaactor] var subscribers = Set.empty[ActorRef]
 
     private var vaactors: Int = 0
 

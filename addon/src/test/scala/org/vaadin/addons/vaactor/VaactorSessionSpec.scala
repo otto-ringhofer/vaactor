@@ -105,7 +105,9 @@ class VaactorSessionSpec extends AkkaSpec {
       "must manage sender in subscribers on Subscribe and Unsubscribe" in {
         val sa = TestActorRef[SessionActor]
         val tp = TestProbe()
-        val subscribers = sa.underlyingActor.subscribers
+
+        def subscribers = sa.underlyingActor.subscribers
+
         subscribers.size shouldBe 0 // initially empty
         sa ! Subscribe
         subscribers.size shouldBe 1 // sender added

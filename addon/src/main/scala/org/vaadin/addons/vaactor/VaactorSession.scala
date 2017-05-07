@@ -5,7 +5,6 @@ import com.typesafe.config.Config
 
 import akka.actor.{ Actor, ActorRef, Props, Stash }
 
-import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -142,7 +141,7 @@ trait VaactorSession[S] extends Stash {
   /** Handles all messages not handled by this trait */
   val sessionBehaviour: Receive
 
-  private[vaactor] val subscribers = mutable.Set.empty[ActorRef]
+  private[vaactor] var subscribers = Set.empty[ActorRef]
 
   private var _sessionState = initialSessionState
 
