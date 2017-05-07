@@ -1,12 +1,14 @@
 package org.vaadin.addons.vaactor
 
 import VaactorUI._
+import org.vaadin.addons.vaactor.VaactorSession.{ Broadcast, Subscribe, Unsubscribe }
 import com.typesafe.config.Config
 import com.vaadin.server.VaadinSession
 import com.vaadin.ui.UI
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 
+import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, _ }
 
@@ -54,13 +56,27 @@ object VaactorUI {
 
   /** UiActor, creates and supervises all VaactorActors.
     *
+    * Handles messages for management of subscribers in ui.
+    *
     * Is instatiated once for each [[VaactorUI]].
     */
   class UiActor extends Actor {
 
+    private[vaactor] val subscribers = mutable.Set.empty[ActorRef]
+
     private var vaactors: Int = 0
 
     def receive: Receive = {
+      case Broadcast(msg) =>
+        for (subscriber <- subscribers) subscriber.tell(msg, sender)
+      case Subscribe =>
+        subscribers += sender
+      case Subscribe(s) =>
+        subscribers += s
+      case Unsubscribe =>
+        subscribers -= sender
+      case Unsubscribe(s) =>
+        subscribers -= s
       case props: Props =>
         vaactors += 1
         val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$vaactors"
@@ -74,17 +90,13 @@ object VaactorUI {
 /** UI with actors
   *
   * contains guardian actor for all vaactor-actors
-  * is also a vaactor
   *
   * @author Otto Ringhofer
   */
-abstract class VaactorUI extends UI with Vaactor {
+abstract class VaactorUI extends UI {
 
   /** Guardian actor, creates all vaactor-actors */
   val uiActor: ActorRef = VaactorUI.actorOf(Props(classOf[UiActor]))
-
-  /** is ui of its own vaactor */
-  val vaactorUI: VaactorUI = this
 
   // will be initialized in init/attach, not possible before
   private var _sessionActor: Option[ActorRef] = None
@@ -96,18 +108,18 @@ abstract class VaactorUI extends UI with Vaactor {
   /** Send a message to the session actor.
     *
     * No message is sent, if [[VaactorServlet.sessionProps]] is None
+    *
+    * @param msg    message to be sent
+    * @param sender sender of message
     */
-  def send2SessionActor(msg: Any): Unit = sessionActor foreach { _ ! msg }
+  def send2SessionActor(msg: Any, sender: ActorRef = Actor.noSender): Unit = sessionActor foreach { _.tell(msg, sender) }
 
   override def attach(): Unit = {
     super.attach()
     _sessionActor = VaactorVaadinSession.lookupSessionActor(VaadinSession.getCurrent)
-    send2SessionActor(VaactorSession.Subscribe)
-    send2SessionActor(VaactorSession.RequestSessionState)
   }
 
   override def detach(): Unit = {
-    send2SessionActor(VaactorSession.Unsubscribe)
     uiActor ! PoisonPill // stops also all vaactor children of this guardian
     super.detach()
   }

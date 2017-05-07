@@ -50,26 +50,26 @@ object VaactorSession {
   /** Send current session state to all registered subscriberes */
   case object BroadcastSessionState extends VaactorSessionMessage
 
-  /** Send message to all registered subscriberes
+  /** Send message to all registered subscriberes - processed by sessionActor and uiActor
     *
     * @param msg message to be sent
     * @tparam T type of message
     */
   case class Broadcast[T](msg: T) extends VaactorSessionMessage
 
-  /** Register sender as subscriber */
+  /** Register sender as subscriber  - processed by sessionActor and uiActor */
   case object Subscribe extends VaactorSessionMessage
 
-  /** Register actor as subscriber
+  /** Register actor as subscriber - processed by sessionActor and uiActor
     *
     * @param actor ActorRef of suscriber
     */
   case class Subscribe(actor: ActorRef) extends VaactorSessionMessage
 
-  /** Remove sender from list of subscribers */
+  /** Remove sender from list of subscribers  - processed by sessionActor and uiActor */
   case object Unsubscribe extends VaactorSessionMessage
 
-  /** Remove actor from list of subscribers
+  /** Remove actor from list of subscribers - processed by sessionActor and uiActor
     *
     * @param actor ActorRef of subscriber to be removed
     */

@@ -13,7 +13,6 @@ abstract class AkkaSpec extends TestKit(VaactorServlet.system)
   implicit val waittime: FiniteDuration = 500.millis
 
   override def afterAll {
-    shutdown()
   }
 
 }

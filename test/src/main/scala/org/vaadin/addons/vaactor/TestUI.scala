@@ -8,8 +8,6 @@ import com.vaadin.shared.communication.PushMode
 import com.vaadin.shared.ui.ui.Transport
 import com.vaadin.ui._
 
-import akka.actor.Actor.Receive
-
 object TestUI {
   val TextName = "text"
   val ButtonName = "button"
@@ -56,10 +54,6 @@ class TestUI extends VaactorUI {
 
     layout.addComponents(txt, btn, cmp, addBtn, remBtn)
     setContent(layout)
-  }
-
-  override def receive: Receive = {
-    case _ =>
   }
 
 }
