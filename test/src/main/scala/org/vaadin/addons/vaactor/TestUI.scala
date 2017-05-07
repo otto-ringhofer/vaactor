@@ -27,7 +27,7 @@ class TestUI extends VaactorUI {
   val sn = "vaactor.system-name"
 
   override def init(request: VaadinRequest): Unit = {
-    forwarder.tell(Register(UIActorName), uiGuardian)
+    forwarder.tell(Register(UIActorName), uiActor)
 
     val layout = new VerticalLayout()
     var addedComponent: Component = null

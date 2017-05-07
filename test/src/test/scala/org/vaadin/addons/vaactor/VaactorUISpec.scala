@@ -23,7 +23,7 @@ class VaactorUISpec extends WebBrowserSpec {
       forwarder ! Lookup(UIActorName)
       val reg = expectMsgType[Registered]
       reg.name shouldBe UIActorName
-      reg.actor.path.toString should startWith(RemoteSystemPath + "/user/vaactor/vaactor-UiGuardian-")
+      reg.actor.path.toString should startWith(RemoteSystemPath + "/user/ui/ui-UiActor-")
     }
   }
 
