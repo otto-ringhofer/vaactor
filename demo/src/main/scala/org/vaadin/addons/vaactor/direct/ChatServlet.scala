@@ -3,7 +3,6 @@ package org.vaadin.addons.vaactor.direct
 import javax.servlet.annotation.WebServlet
 
 import org.vaadin.addons.vaactor.VaactorServlet
-import org.vaadin.addons.vaactor.chat.ChatUI
 import com.vaadin.annotations.VaadinServletConfiguration
 
 /** Define servlet, url pattern and ui-class to start

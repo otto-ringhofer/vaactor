@@ -1,15 +1,31 @@
 package org.vaadin.addons.vaactor.chat
 
+import ChatComponent.Strategy
 import org.vaadin.addons.vaactor._
 import org.vaadin.addons.vaactor.chat.ChatServer._
 import com.vaadin.annotations.Push
 import com.vaadin.data.provider.{ DataProvider, ListDataProvider }
-import com.vaadin.server.{ Sizeable, VaadinRequest }
+import com.vaadin.server.Sizeable
 import com.vaadin.shared.communication.PushMode
 import com.vaadin.shared.ui.ui.Transport
 import com.vaadin.ui._
+import com.vaadin.ui.themes.ValoTheme
+
+import akka.actor.ActorRef
 
 import scala.collection.JavaConverters._
+
+object ChatComponent {
+
+  trait Strategy {
+    def login(name: String, sender: ActorRef): Unit
+
+    def logout(name: String, sender: ActorRef): Unit
+
+    def send(name: String, text: String, sender: ActorRef): Unit
+  }
+
+}
 
 /** UI to be created by servlet
   *
@@ -19,7 +35,8 @@ import scala.collection.JavaConverters._
   value = PushMode.AUTOMATIC,
   transport = Transport.WEBSOCKET
 )
-class ChatUI extends VaactorUI with Vaactor.UIVaactor {
+class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: Strategy)
+  extends CustomComponent with Vaactor {
 
   /** Contains list of messages from chatroom */
   val chatList = new java.util.ArrayList[Statement]()
@@ -44,7 +61,7 @@ class ChatUI extends VaactorUI with Vaactor.UIVaactor {
     setSpacing(true)
     addComponents(
       userName,
-      new Button("Login", _ => chatServer ! Subscribe(Client(userName.getValue, self)))
+      new Button("Login", _ => strategy.login(userName.getValue, self))
     )
   }
 
@@ -57,7 +74,7 @@ class ChatUI extends VaactorUI with Vaactor.UIVaactor {
       text,
       new Button(
         "Send", _ => {
-          chatServer ! Statement(userName.getValue, text.getValue)
+          strategy.send(userName.getValue, text.getValue, self)
           text.setValue("")
           text.focus()
         }
@@ -88,21 +105,26 @@ class ChatUI extends VaactorUI with Vaactor.UIVaactor {
     }
   )
 
-  override def init(request: VaadinRequest): Unit = {
-    setContent(new HorizontalLayout {
-      setSpacing(true)
-      addComponents(
-        new VerticalLayout {
-          setSpacing(true)
-          addComponents(userPanel, chatPanel)
-        },
-        memberPanel)
-    })
-    logout("")
-  }
+  setCompositionRoot(new VerticalLayout {
+    addComponents(
+      new Label {
+        setValue(title)
+        addStyleName(ValoTheme.LABEL_H1)
+      },
+      new HorizontalLayout {
+        setSpacing(true)
+        addComponents(
+          new VerticalLayout {
+            setSpacing(true)
+            addComponents(userPanel, chatPanel)
+          },
+          memberPanel)
+      })
+  })
+  logout("")
 
   private def logout(name: String): Unit = {
-    if (name.nonEmpty) chatServer ! Unsubscribe(Client(name, self))
+    if (name.nonEmpty) strategy.logout(name, self)
     userName.setValue("")
     self ! Members(Nil)
     loginPanel.setEnabled(true)
