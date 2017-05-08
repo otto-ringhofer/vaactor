@@ -7,19 +7,19 @@ import com.vaadin.annotations.VaadinServletConfiguration
 
 import akka.actor.Props
 
-/** define servlet, url pattern and ui-class to start
+/** Define servlet, url pattern and ui-class to start
   *
   * @author Otto Ringhofer
   */
 @WebServlet(
-  urlPatterns = Array("/*"),
+  urlPatterns = Array("/session/*", "/VAADIN/*"),
   asyncSupported = true)
 @VaadinServletConfiguration(
   productionMode = false,
-  ui = classOf[DemoUI])
-class DemoServlet extends VaactorServlet {
+  ui = classOf[SessionUI])
+class SessionServlet extends VaactorServlet {
 
-  /** define session actor to be created for every session */
-  override val sessionProps = Some(Props(classOf[DemoSession.SessionActor]))
+  /** Define session actor to be created for every session */
+  override val sessionProps = Some(Props(classOf[Session.SessionActor]))
 
 }

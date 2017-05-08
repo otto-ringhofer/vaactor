@@ -29,17 +29,23 @@ object ChatServer {
     */
   case class Unsubscribe(client: Client)
 
-  /** Subscription was successful, sent to client
+  /** Subscription was successful, sent to client as response to Subscribe
     *
-    * @param welcome Welcome text
+    * @param name subscribed name
     */
-  case class SubscriptionSuccess(welcome: String)
+  case class SubscriptionSuccess(name: String)
 
-  /** Subscription failed, sent to client
+  /** Subscription failed, sent to client as response to Subscribe
     *
     * @param error Error message
     */
   case class SubscriptionFailure(error: String)
+
+  /** Subscription cancelled, sent to client as response to Unsubscribe
+    *
+    * @param name unsubscripted name
+    */
+  case class SubscriptionCancelled(name: String)
 
   /** Statement in chatroom, processed by chatroom, sent to clients
     *
@@ -79,22 +85,25 @@ object ChatServer {
     private var chatRoom = Map.empty[String, Client]
 
     /** Process received messages */
-    def receive: PartialFunction[Any, Unit] = {
+    def receive: Receive = {
       // Subscribe from client
       case Subscribe(client) =>
+        // no name, reply with failure
+        if (client.name.isEmpty)
+          sender ! SubscriptionFailure("Empty name not valid")
         // duplicate name, reply with failure
-        if (chatRoom.contains(client.name)) {
-          sender ! SubscriptionFailure(s"Name '${ client.name }' already subscripted")
-        }
-        // add client to chatroom, reply with welcome, brodcast Enter to clients
+        else if (chatRoom.contains(client.name))
+          sender ! SubscriptionFailure(s"Name '${ client.name }' already subscribed")
+        // add client to chatroom, reply with success, brodcast Enter to clients
         else {
           chatRoom += client.name -> client
-          sender ! SubscriptionSuccess(s"Welcome ${ client.name }")
+          sender ! SubscriptionSuccess(client.name)
           broadcast(Enter(client.name))
         }
-      // Unsubscribe from client, broadcast Leave to clients, remove client from chatroom
+      // Unsubscribe from client, reply with cancelled, broadcast Leave to clients, remove client from chatroom
       case Unsubscribe(client) =>
         if (chatRoom.contains(client.name)) {
+          sender ! SubscriptionCancelled(client.name)
           broadcast(Leave(client.name))
           chatRoom -= client.name
         }

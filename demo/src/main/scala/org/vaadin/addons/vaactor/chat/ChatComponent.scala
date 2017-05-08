@@ -1,8 +1,7 @@
 package org.vaadin.addons.vaactor.chat
 
-import ChatComponent.Strategy
 import org.vaadin.addons.vaactor._
-import org.vaadin.addons.vaactor.chat.ChatServer._
+import org.vaadin.addons.vaactor.demo.Session
 import com.vaadin.annotations.Push
 import com.vaadin.data.provider.{ DataProvider, ListDataProvider }
 import com.vaadin.server.Sizeable
@@ -35,13 +34,13 @@ object ChatComponent {
   value = PushMode.AUTOMATIC,
   transport = Transport.WEBSOCKET
 )
-class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: Strategy)
+class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: ChatComponent.Strategy)
   extends CustomComponent with Vaactor {
 
   /** Contains list of messages from chatroom */
-  val chatList = new java.util.ArrayList[Statement]()
-  val chatDataProvider: ListDataProvider[Statement] = DataProvider.ofCollection[Statement](chatList)
-  val chatPanel = new Grid[Statement]("Chat", chatDataProvider) {
+  val chatList = new java.util.ArrayList[ChatServer.Statement]()
+  val chatDataProvider: ListDataProvider[ChatServer.Statement] = DataProvider.ofCollection[ChatServer.Statement](chatList)
+  val chatPanel = new Grid[ChatServer.Statement]("Chat", chatDataProvider) {
     addColumn(d => d.name)
     addColumn(d => d.msg)
     setWidth(400, Sizeable.Unit.PIXELS)
@@ -65,7 +64,7 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
     )
   }
 
-  val logoutBtn = new Button("Logout", _ => logout(userName.getValue))
+  val logoutBtn = new Button("Logout", _ => strategy.logout(userName.getValue, self))
 
   val messagePanel = new HorizontalLayout {
     setSpacing(true)
@@ -121,48 +120,54 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
           memberPanel)
       })
   })
-  logout("")
 
-  private def logout(name: String): Unit = {
-    if (name.nonEmpty) strategy.logout(name, self)
-    userName.setValue("")
-    self ! Members(Nil)
-    loginPanel.setEnabled(true)
-    logoutBtn.setEnabled(false)
-    messagePanel.setEnabled(false)
-    userPanel.setCaption("Please login ...")
+  self ! ChatServer.SubscriptionCancelled("")
+
+  override def attach(): Unit = {
+    super.attach()
+    send2SessionActor(Session.Attached)
   }
 
-  def receive: PartialFunction[Any, Unit] = {
+  override def detach(): Unit = {
+    send2SessionActor(Session.Detached)
+    super.detach()
+  }
+
+  override def receive: PartialFunction[Any, Unit] = {
     // User entered chatroom, update member list
-    case Enter(name) =>
-      memberList.add(name)
-      memberDataProvider.refreshAll() // refreshItem operates only on changed items, not on new items
+    case ChatServer.Enter(name) =>
       Notification.show(s"$name entered the chatroom")
+      ChatServer.chatServer ! ChatServer.RequestMembers
     // User left chatroom, update member list
-    case Leave(name) =>
-      memberList.remove(name)
-      memberDataProvider.refreshAll()
+    case ChatServer.Leave(name) =>
       Notification.show(s"$name left the chatroom")
+      ChatServer.chatServer ! ChatServer.RequestMembers
     // Message from chatroom, update message list
-    case statement: Statement =>
+    case statement: ChatServer.Statement =>
       chatList.add(statement)
       chatDataProvider.refreshAll()
       chatPanel.scrollToEnd()
     // Member list of chatroom, update member list
-    case Members(members) =>
+    case ChatServer.Members(members) =>
       memberList.clear()
       memberList.addAll(members.asJava)
       memberDataProvider.refreshAll()
     // Subscription successful, adjust user interface state
-    case SubscriptionSuccess(welcome) =>
-      chatServer ! RequestMembers
+    case ChatServer.SubscriptionSuccess(name) =>
+      ChatServer.chatServer ! ChatServer.RequestMembers
       loginPanel.setEnabled(false)
       logoutBtn.setEnabled(true)
       messagePanel.setEnabled(true)
-      userPanel.setCaption(welcome)
+      userPanel.setCaption(s"Logged in: $name")
+    // Subscription cancelled, adjust user interface state
+    case ChatServer.SubscriptionCancelled(_) =>
+      self ! ChatServer.Members(Nil)
+      loginPanel.setEnabled(true)
+      logoutBtn.setEnabled(false)
+      messagePanel.setEnabled(false)
+      userPanel.setCaption("Please login ...")
     // Subscription failed, show warning
-    case SubscriptionFailure(error) =>
+    case ChatServer.SubscriptionFailure(error) =>
       Notification.show(error, Notification.Type.WARNING_MESSAGE)
   }
 

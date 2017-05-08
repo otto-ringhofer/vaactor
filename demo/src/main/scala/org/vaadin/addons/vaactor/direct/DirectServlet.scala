@@ -15,6 +15,6 @@ import com.vaadin.annotations.VaadinServletConfiguration
 )
 @VaadinServletConfiguration(
   productionMode = false,
-  ui = classOf[ChatUI]
+  ui = classOf[DirectUI]
 )
-class ChatServlet extends VaactorServlet
+class DirectServlet extends VaactorServlet

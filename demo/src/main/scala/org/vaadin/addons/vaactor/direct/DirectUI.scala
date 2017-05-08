@@ -1,8 +1,7 @@
 package org.vaadin.addons.vaactor.direct
 
 import org.vaadin.addons.vaactor.VaactorUI
-import org.vaadin.addons.vaactor.chat.ChatComponent
-import org.vaadin.addons.vaactor.chat.ChatServer._
+import org.vaadin.addons.vaactor.chat.{ ChatComponent, ChatServer }
 import com.vaadin.annotations.Push
 import com.vaadin.server.VaadinRequest
 import com.vaadin.shared.communication.PushMode
@@ -10,18 +9,18 @@ import com.vaadin.shared.ui.ui.Transport
 
 import akka.actor.ActorRef
 
-object ChatUI {
+object DirectUI {
 
   val strategy = new ChatComponent.Strategy {
 
     override def login(name: String, sender: ActorRef): Unit =
-      chatServer.tell(Subscribe(Client(name, sender)), sender)
+      ChatServer.chatServer.tell(ChatServer.Subscribe(ChatServer.Client(name, sender)), sender)
 
     override def logout(name: String, sender: ActorRef): Unit =
-      if (name.nonEmpty) chatServer.tell(Unsubscribe(Client(name, sender)), sender)
+      ChatServer.chatServer.tell(ChatServer.Unsubscribe(ChatServer.Client(name, sender)), sender)
 
     override def send(name: String, text: String, sender: ActorRef): Unit =
-      chatServer.tell(Statement(name, text), sender)
+      ChatServer.chatServer.tell(ChatServer.Statement(name, text), sender)
 
   }
 
@@ -35,10 +34,9 @@ object ChatUI {
   value = PushMode.AUTOMATIC,
   transport = Transport.WEBSOCKET
 )
-class ChatUI extends VaactorUI {
-  chatUI =>
+class DirectUI extends VaactorUI {
 
   override def init(request: VaadinRequest): Unit =
-    setContent(new ChatComponent(chatUI, "Vaactor chat direct (without session)", ChatUI.strategy))
+    setContent(new ChatComponent(this, "Vaactor chat direct (without session)", DirectUI.strategy))
 
 }
