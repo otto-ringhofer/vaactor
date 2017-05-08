@@ -1,6 +1,6 @@
 package org.vaadin.addons.vaactor.chat
 
-import org.vaadin.addons.vaactor.VaactorUI
+import org.vaadin.addons.vaactor._
 import org.vaadin.addons.vaactor.chat.ChatServer._
 import com.vaadin.annotations.Push
 import com.vaadin.data.provider.{ DataProvider, ListDataProvider }
@@ -11,24 +11,17 @@ import com.vaadin.ui._
 
 import scala.collection.JavaConverters._
 
-object ChatUI {
-
-  case class Login(name: String)
-
-  case class Logout(name: String)
-
-}
-
-/** ui to be created by servlet
+/** UI to be created by servlet
   *
   * @author Otto Ringhofer
   */
-@Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
-class ChatUI extends VaactorUI {
+@Push(
+  value = PushMode.AUTOMATIC,
+  transport = Transport.WEBSOCKET
+)
+class ChatUI extends VaactorUI with Vaactor.UIVaactor {
 
-  import ChatUI._
-
-  /** contains list of messages from chatroom */
+  /** Contains list of messages from chatroom */
   val chatList = new java.util.ArrayList[Statement]()
   val chatDataProvider: ListDataProvider[Statement] = DataProvider.ofCollection[Statement](chatList)
   val chatPanel = new Grid[Statement]("Chat", chatDataProvider) {
@@ -37,25 +30,25 @@ class ChatUI extends VaactorUI {
     setWidth(400, Sizeable.Unit.PIXELS)
   }
 
-  /** contains list of chatroom menbers */
+  /** Contains list of chatroom menbers */
   val memberList = new java.util.ArrayList[String]()
   val memberDataProvider: ListDataProvider[String] = DataProvider.ofCollection[String](memberList)
   val memberPanel = new ListSelect("Chatroom Members", memberDataProvider) {
     setWidth(100, Sizeable.Unit.PIXELS)
   }
 
-  /** contains username */
+  /** Contains username */
   val userName = new TextField()
 
   val loginPanel = new HorizontalLayout {
     setSpacing(true)
     addComponents(
       userName,
-      new Button("Login", _ => self ! Login(userName.getValue))
+      new Button("Login", _ => chatServer ! Subscribe(Client(userName.getValue, self)))
     )
   }
 
-  val logoutBtn = new Button("Logout", _ => self ! Logout(userName.getValue))
+  val logoutBtn = new Button("Logout", _ => logout(userName.getValue))
 
   val messagePanel = new HorizontalLayout {
     setSpacing(true)
@@ -71,7 +64,7 @@ class ChatUI extends VaactorUI {
       ))
   }
 
-  /** contains user interface for login/logout and sending of messages */
+  /** Contains user interface for login/logout and sending of messages */
   val userPanel = new Panel(
     new VerticalLayout {
       setSpacing(true)
@@ -105,47 +98,50 @@ class ChatUI extends VaactorUI {
         },
         memberPanel)
     })
-    self ! Logout("")
+    logout("")
+  }
+
+  private def logout(name: String): Unit = {
+    if (name.nonEmpty) chatServer ! Unsubscribe(Client(name, self))
+    userName.setValue("")
+    self ! Members(Nil)
+    loginPanel.setEnabled(true)
+    logoutBtn.setEnabled(false)
+    messagePanel.setEnabled(false)
+    userPanel.setCaption("Please login ...")
   }
 
   def receive: PartialFunction[Any, Unit] = {
-    // user entered chatroom, update member list
+    // User entered chatroom, update member list
     case Enter(name) =>
       memberList.add(name)
       memberDataProvider.refreshAll() // refreshItem operates only on changed items, not on new items
       Notification.show(s"$name entered the chatroom")
-    // user left chatroom, update member list
+    // User left chatroom, update member list
     case Leave(name) =>
       memberList.remove(name)
       memberDataProvider.refreshAll()
       Notification.show(s"$name left the chatroom")
-    //  message from chatroom, update message list
+    // Message from chatroom, update message list
     case statement: Statement =>
       chatList.add(statement)
       chatDataProvider.refreshAll()
       chatPanel.scrollToEnd()
-    // member list of chatroom, update member list
+    // Member list of chatroom, update member list
     case Members(members) =>
       memberList.clear()
       memberList.addAll(members.asJava)
       memberDataProvider.refreshAll()
-    case Login(name) => if (name.nonEmpty) {
-      chatServer ! Subscribe(Client(name, self))
+    // Subscription successful, adjust user interface state
+    case SubscriptionSuccess(welcome) =>
       chatServer ! RequestMembers
       loginPanel.setEnabled(false)
       logoutBtn.setEnabled(true)
       messagePanel.setEnabled(true)
-      userPanel.setCaption(s"Welcome ${ name }")
-    }
-    case Logout(name) =>
-      if (name.nonEmpty) chatServer ! Unsubscribe(Client(name, self))
-      userName.setValue("")
-      self ! Members(Nil)
-      loginPanel.setEnabled(true)
-      logoutBtn.setEnabled(false)
-      messagePanel.setEnabled(false)
-      userPanel.setCaption("Please login ...")
-
+      userPanel.setCaption(welcome)
+    // Subscription failed, show warning
+    case SubscriptionFailure(error) =>
+      Notification.show(error, Notification.Type.WARNING_MESSAGE)
   }
 
 }

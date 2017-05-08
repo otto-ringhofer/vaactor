@@ -4,93 +4,113 @@ import org.vaadin.addons.vaactor.VaactorServlet
 
 import akka.actor.{ Actor, ActorRef, Props }
 
-import scala.collection.mutable
-
-/** contains ChatServer actor and messages
+/** Contains ChatServer actor and messages
   *
   * @author Otto Ringhofer
   */
 object ChatServer {
 
-  /** clients handled by chat room
+  /** Clients handled by chat room
     *
     * @param name  name of user
     * @param actor actorref for communication
     */
   case class Client(name: String, actor: ActorRef)
 
-  /** subscribe client to chatroom, sent to chatroom
+  /** Subscribe client to chatroom, processed by chatroom
     *
     * @param client enters chatroom
     */
   case class Subscribe(client: Client)
 
-  /** unsubscribe client from chatroom, sent to chatroom
+  /** Unsubscribe client from chatroom, processed by chatroom
     *
     * @param client leaves chatroom
     */
   case class Unsubscribe(client: Client)
 
-  /** statement in chatroom, sent to chatroom, sent to clients
+  /** Subscription was successful, sent to client
+    *
+    * @param welcome Welcome text
+    */
+  case class SubscriptionSuccess(welcome: String)
+
+  /** Subscription failed, sent to client
+    *
+    * @param error Error message
+    */
+  case class SubscriptionFailure(error: String)
+
+  /** Statement in chatroom, processed by chatroom, sent to clients
     *
     * @param name name of user
     * @param msg  text of statement
     */
   case class Statement(name: String, msg: String)
 
-  /** request memberlist from chatroom, sent to chatroom */
+  /** Request memberlist from chatroom, processed by chatroom */
   case object RequestMembers
 
-  /** client entered chatroom, sent to clients
+  /** Client entered chatroom, sent to clients
     *
     * @param name name of user
     */
   case class Enter(name: String)
 
-  /** client left chatroom, sent to clients
+  /** Client left chatroom, sent to clients
     *
     * @param name name of user
     */
   case class Leave(name: String)
 
-  /** memberlist, sent to clients
+  /** Memberlist, sent to clients
     *
     * @param names list of user names of clients
     */
   case class Members(names: Seq[String])
 
-  /** actorref of chatroom actor */
+  /** ActoRef of chatroom actor */
   val chatServer: ActorRef = VaactorServlet.system.actorOf(Props[ServerActor], "chatServer")
 
-  /** actor handling chatroom */
+  /** Actor handling chatroom */
   class ServerActor extends Actor {
 
-    // list of clients in chatroom
-    private val chatRoom = mutable.ListBuffer.empty[Client]
+    // List of clients in chatroom
+    private var chatRoom = Map.empty[String, Client]
 
-    /** process received messages */
+    /** Process received messages */
     def receive: PartialFunction[Any, Unit] = {
-      // subscribe from client, add client to chatroom, send enter to all clients
+      // Subscribe from client
       case Subscribe(client) =>
-        chatRoom += client
-        broadcast(Enter(client.name))
-      // unsubscribe from client, send leave to all clients, remove client from chatroom
+        // duplicate name, reply with failure
+        if (chatRoom.contains(client.name)) {
+          sender ! SubscriptionFailure(s"Name '${ client.name }' already subscripted")
+        }
+        // add client to chatroom, reply with welcome, brodcast Enter to clients
+        else {
+          chatRoom += client.name -> client
+          sender ! SubscriptionSuccess(s"Welcome ${ client.name }")
+          broadcast(Enter(client.name))
+        }
+      // Unsubscribe from client, broadcast Leave to clients, remove client from chatroom
       case Unsubscribe(client) =>
-        broadcast(Leave(client.name))
-        chatRoom -= client
-      // statement from client, send to all clients
+        if (chatRoom.contains(client.name)) {
+          broadcast(Leave(client.name))
+          chatRoom -= client.name
+        }
+      // Statement from client, broadcast to clients
       case msg: Statement =>
         broadcast(msg)
-      // request from client, send member list to this client
+      // RequestMembers from client, send member list to sending client
       case RequestMembers =>
-        sender ! Members(chatRoom map { _.name })
+        sender ! Members(chatRoom.keySet.toList)
     }
 
-    /** send message to every client in chatroom
+    /** Send message to every client in chatroom
       *
       * @param msg message
       */
-    def broadcast(msg: Any): Unit = for (client <- chatRoom) client.actor ! msg
+    def broadcast(msg: Any): Unit = chatRoom foreach { _._2.actor ! msg }
 
   }
 
