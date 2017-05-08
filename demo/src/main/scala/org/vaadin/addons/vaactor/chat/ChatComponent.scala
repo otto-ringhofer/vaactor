@@ -35,7 +35,13 @@ object ChatComponent {
   transport = Transport.WEBSOCKET
 )
 class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: ChatComponent.Strategy)
-  extends CustomComponent with Vaactor {
+  extends CustomComponent with Vaactor.AttachSession {
+
+  /** Send to session actor on attach */
+  override val attachMessage = Session.Attached
+
+  /** Send to session actor on detach */
+  override val detachMessage = Session.Detached
 
   /** Contains list of messages from chatroom */
   val chatList = new java.util.ArrayList[ChatServer.Statement]()
@@ -122,16 +128,6 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
   })
 
   self ! ChatServer.SubscriptionCancelled("")
-
-  override def attach(): Unit = {
-    super.attach()
-    send2SessionActor(Session.Attached)
-  }
-
-  override def detach(): Unit = {
-    send2SessionActor(Session.Detached)
-    super.detach()
-  }
 
   override def receive: PartialFunction[Any, Unit] = {
     // User entered chatroom, update member list

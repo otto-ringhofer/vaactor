@@ -3,7 +3,6 @@ package org.vaadin.addons.vaactor
 import javax.servlet.annotation.WebServlet
 
 import Forwarder._
-import TestServlet._
 import com.vaadin.annotations.VaadinServletConfiguration
 
 import akka.actor.{ Actor, ActorRef, Props }
@@ -11,6 +10,10 @@ import akka.actor.{ Actor, ActorRef, Props }
 object TestServlet {
 
   case class SessionState(value: String)
+
+  case object Attach
+
+  case object Detach
 
   val EmptySessionState = SessionState("")
 
@@ -20,6 +23,8 @@ object TestServlet {
 
     override val sessionBehaviour: Receive = {
       case sst: SessionState => sessionState = sst
+      case Attach => forwarder forward Forward(TestActorName, Attach)
+      case Detach => forwarder forward Forward(TestActorName, Detach)
     }
 
     forwarder ! Register(SessionActorName)
@@ -41,6 +46,8 @@ object TestServlet {
   ui = classOf[TestUI]
 )
 class TestServlet extends VaactorServlet {
+
+  import TestServlet._
 
   override val sessionProps = Some(Props[SessionActor])
 

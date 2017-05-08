@@ -48,6 +48,40 @@ object Vaactor {
     override val vaactorUI: VaactorUI = this
   }
 
+  /** Vaadin Component with dedicated actor and automatic attach/detach message to session actor.
+    */
+  trait AttachSession extends VaactorComponent {
+
+    /** Message sent to session actor on attach of component */
+    val attachMessage: Any
+
+    /** Message sent to session actor on detach of component */
+    val detachMessage: Any
+
+    abstract override def attach(): Unit = {
+      super.attach()
+      send2SessionActor(attachMessage)
+    }
+
+    abstract override def detach(): Unit = {
+      send2SessionActor(detachMessage)
+      super.detach()
+    }
+
+  }
+
+  /** Vaadin Component with dedicated actor and automatic subscription to session actor.
+    */
+  trait SubscribeSession extends AttachSession {
+
+    /** Subscribe message sent to session actor on attach of component */
+    override val attachMessage = VaactorSession.Subscribe
+
+    /** Unsubscribe message sent to session actor on detach of component */
+    override val detachMessage = VaactorSession.Unsubscribe
+
+  }
+
 }
 
 /** Makes a class "feel" like an actor, with `receive` method synchronized with VaadinUI

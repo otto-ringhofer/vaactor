@@ -17,6 +17,7 @@ class VaactorSpec extends WebBrowserSpec {
     id.ref should not be None
     id.ref.get.path.toString shouldBe ForwarderPath
     forwarder = id.ref.get // store for later use
+    forwarder ! Register(TestActorName)
   }
 
   "remote Vaactor Actor should" - {
@@ -80,6 +81,17 @@ class VaactorSpec extends WebBrowserSpec {
       click on RemoveComponentButtonName
       reg.actor ! RequestText(self)
       expectNoMsg()
+    }
+
+    "subscribe and unsubscribe" in {
+      forwarder ! Lookup(SessionActorName)
+      val reg = expectMsgType[Registered]
+      reg.actor ! Attach
+      expectMsgType[Attach.type]
+      click on AddSubscriberButtonName
+      expectMsgType[Attach.type]
+      click on RemoveSubscriberButtonName
+      expectMsgType[Detach.type]
     }
   }
 
