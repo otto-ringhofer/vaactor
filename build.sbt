@@ -22,7 +22,7 @@ lazy val root = project.in(file("."))
         state
     }
   )))
-  .aggregate(addon, demo, chat, example, test)
+  .aggregate(addon, example, demo, test)
 
 lazy val addon = (project in file("addon"))
   .settings(
@@ -35,13 +35,6 @@ lazy val demo = (project in file("demo"))
   .settings(
     name := "vaactor-demo",
     libraryDependencies ++= Dependencies.demoDeps
-  ).dependsOn(addon)
-
-lazy val chat = (project in file("chat"))
-  .enablePlugins(JettyPlugin)
-  .settings(
-    name := "vaactor-chat",
-    libraryDependencies ++= Dependencies.chatDeps
   ).dependsOn(addon)
 
 lazy val example = (project in file("example"))

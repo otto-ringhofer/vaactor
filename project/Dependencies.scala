@@ -50,12 +50,9 @@ object Dependencies {
     akkaTestkit
   )
 
+  val exampleDeps: Seq[ModuleID] = vaadinServletDeps
 
   val demoDeps: Seq[ModuleID] = vaadinServletDeps
-
-  val chatDeps: Seq[ModuleID] = vaadinServletDeps
-
-  val exampleDeps: Seq[ModuleID] = vaadinServletDeps
 
   val testDeps: Seq[ModuleID] = Seq(
     akkaRemote,
