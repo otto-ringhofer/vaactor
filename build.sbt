@@ -1,43 +1,54 @@
 name := "vaactor"
 
-organization := "org.vaadin.addons"
+lazy val root = project.in(file("."))
+  .settings(inThisBuild(Seq(
+    organization := "org.vaadin.addons",
+    version := "1.0.0-SNAPSHOT", // change also in reference.conf
+    scalaVersion := "2.12.2",
+    crossScalaVersions := Seq("2.12.2"),
+    scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation"),
+    scalacOptions in(Compile, doc) ++= Seq("-groups", "-implicits", "-diagrams"),
+    resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases",
+    commands += Command.command("testAll") { state =>
+      "project addon" ::
+        "test" ::
+        "project test" ::
+        "jetty:start" ::
+        "testOnly org.vaadin.addons.vaactor.VaactorServletSpec" ::
+        "testOnly org.vaadin.addons.vaactor.VaactorSessionSpec" ::
+        "testOnly org.vaadin.addons.vaactor.VaactorUISpec" ::
+        "testOnly org.vaadin.addons.vaactor.VaactorSpec" ::
+        "jetty:stop" ::
+        "project root" ::
+        state
+    }
+  )))
+  .aggregate(addon, example, demo, test)
 
-version in ThisBuild := "1.0.0-SNAPSHOT" // change also in reference.conf
-
-scalaVersion in ThisBuild := "2.12.1"
-
-crossScalaVersions in ThisBuild := Seq("2.12.1")
-
-scalacOptions in ThisBuild ++= Seq("-deprecation", "-unchecked", "-feature")
-
-lazy val root = project.in(file(".")).aggregate(addon, demo, chat, example)
-
-lazy val addon = project
+lazy val addon = (project in file("addon"))
   .settings(
     name := "vaactor",
     libraryDependencies := Dependencies.addonDeps
   )
 
-lazy val demo = project
+lazy val demo = (project in file("demo"))
   .enablePlugins(JettyPlugin)
   .settings(
     name := "vaactor-demo",
-    javaOptions in Jetty ++= Dependencies.javaOptionsInTomcat,
     libraryDependencies ++= Dependencies.demoDeps
   ).dependsOn(addon)
 
-lazy val chat = project
-  .enablePlugins(JettyPlugin)
-  .settings(
-    name := "vaactor-chat",
-    javaOptions in Jetty ++= Dependencies.javaOptionsInTomcat,
-    libraryDependencies ++= Dependencies.demoDeps
-  ).dependsOn(addon)
-
-lazy val example = project
+lazy val example = (project in file("example"))
   .enablePlugins(JettyPlugin)
   .settings(
     name := "vaactor-example",
-    javaOptions in Jetty ++= Dependencies.javaOptionsInTomcat,
     libraryDependencies ++= Dependencies.exampleDeps
+  ).dependsOn(addon)
+
+lazy val test = (project in file("test"))
+  .enablePlugins(JettyPlugin)
+  .settings(
+    name := "vaactor-test",
+    libraryDependencies ++= Dependencies.testDeps,
+    parallelExecution in Test := false
   ).dependsOn(addon)

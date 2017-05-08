@@ -3,7 +3,7 @@ package org.vaadin.addons.vaactor.example
 import javax.servlet.annotation.WebServlet
 
 import ExampleObject._
-import org.vaadin.addons.vaactor.{ VaactorServlet, VaactorSession, VaactorUI }
+import org.vaadin.addons.vaactor._
 import com.vaadin.annotations.{ Push, VaadinServletConfiguration }
 import com.vaadin.server.VaadinRequest
 import com.vaadin.shared.communication.PushMode
@@ -18,26 +18,34 @@ import akka.actor.{ Actor, Props }
   */
 
 object ExampleObject {
+  // global counter
   var globalCnt = 0
 }
 
 @WebServlet(
   urlPatterns = Array("/*"),
-  asyncSupported = true)
+  asyncSupported = true
+)
 @VaadinServletConfiguration(
   productionMode = false,
-  ui = classOf[ExampleUI])
+  ui = classOf[ExampleUI]
+)
 class ExampleServlet extends VaactorServlet {
 
   override val sessionProps: Option[Props] = Some(Props(classOf[ExampleSessionActor]))
 
 }
 
-@Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
-class ExampleUI extends VaactorUI {
+@Push(
+  value = PushMode.AUTOMATIC,
+  transport = Transport.WEBSOCKET
+)
+class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
 
+  // counter local to this UI
   var uiCnt = 0
 
+  val stateDisplay = new Label()
   val layout = new VerticalLayout {
     setMargin(true)
     setSpacing(true)
@@ -47,23 +55,24 @@ class ExampleUI extends VaactorUI {
     })
     addComponent(new Button("Click Me", { _ =>
       uiCnt += 1
-      vaactorUI.send2SessionActor(s"Thanks for clicking! (uiCnt:$uiCnt)")
+      send2SessionActor(s"Thanks for clicking! (uiCnt:$uiCnt)")
     })
     )
+    addComponent(stateDisplay)
   }
 
   override def init(request: VaadinRequest): Unit = { setContent(layout) }
 
-  def receive: PartialFunction[Any, Unit] = {
+  override def receive: PartialFunction[Any, Unit] = {
     case hello: String =>
       globalCnt += 1
-      layout.addComponent(new Label(s"$hello (globalCnt:$globalCnt)"))
+      stateDisplay.setValue(s"$hello (globalCnt:$globalCnt)")
   }
 
 }
 
 class ExampleSessionActor extends Actor with VaactorSession[Int] {
-
+  // state is session counter
   override val initialSessionState = 0
 
   override val sessionBehaviour: Receive = {

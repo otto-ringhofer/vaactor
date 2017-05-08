@@ -1,18 +1,20 @@
-package org.vaadin.addons.vaactor.chat
+package org.vaadin.addons.vaactor.direct
 
 import javax.servlet.annotation.WebServlet
 
 import org.vaadin.addons.vaactor.VaactorServlet
 import com.vaadin.annotations.VaadinServletConfiguration
 
-/** define servlet, url pattern and ui-class to start
+/** Define servlet, url pattern and ui-class to start
   *
   * @author Otto Ringhofer
   */
 @WebServlet(
-  urlPatterns = Array("/*"),
-  asyncSupported = true)
+  urlPatterns = Array("/direct/*"),
+  asyncSupported = true
+)
 @VaadinServletConfiguration(
   productionMode = false,
-  ui = classOf[ChatUI])
-class ChatServlet extends VaactorServlet
+  ui = classOf[DirectUI]
+)
+class DirectServlet extends VaactorServlet
