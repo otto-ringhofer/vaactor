@@ -16,10 +16,10 @@ import akka.actor.Props
   asyncSupported = true)
 @VaadinServletConfiguration(
   productionMode = false,
-  ui = classOf[ChatUI])
-class ChatServlet extends VaactorServlet {
+  ui = classOf[DemoUI])
+class DemoServlet extends VaactorServlet {
 
   /** define session actor to be created for every session */
-  override val sessionProps = Some(Props(classOf[ChatSession.SessionActor]))
+  override val sessionProps = Some(Props(classOf[DemoSession.SessionActor]))
 
 }

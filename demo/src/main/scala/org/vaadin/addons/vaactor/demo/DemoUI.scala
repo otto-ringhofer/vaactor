@@ -1,6 +1,6 @@
 package org.vaadin.addons.vaactor.demo
 
-import org.vaadin.addons.vaactor.VaactorUI
+import org.vaadin.addons.vaactor._
 import org.vaadin.addons.vaactor.demo.ChatServer.Statement
 import com.vaadin.annotations.Push
 import com.vaadin.data.provider.{ DataProvider, ListDataProvider }
@@ -15,7 +15,7 @@ import scala.collection.JavaConverters._
   *
   * @author Otto Ringhofer
   */
-object ChatUI {
+object DemoUI {
 
   /** clear message list */
   case object Clear
@@ -27,7 +27,7 @@ object ChatUI {
   * @author Otto Ringhofer
   */
 @Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
-class ChatUI extends VaactorUI {
+class DemoUI extends VaactorUI with Vaactor.UIVaactor {
 
   /** contains list of messages from chatroom */
   val chatList = new java.util.ArrayList[Statement]()
@@ -39,7 +39,7 @@ class ChatUI extends VaactorUI {
   }
 
   /** contains user interface for login/logout and sending of messages */
-  val userPanel = new ChatComponent(this)
+  val userPanel = new DemoComponent(this)
 
   /** contains list of chatroom menbers */
   val memberList = new java.util.ArrayList[String]()
@@ -62,12 +62,12 @@ class ChatUI extends VaactorUI {
         addComponent(memberPanel)
       })
     })
-    send2SessionActor(ChatSession.Login())
+    send2SessionActor(DemoSession.Login())
   }
 
-  def receive: PartialFunction[Any, Unit] = {
+  override def receive: PartialFunction[Any, Unit] = {
     // session state, display and send to user panel actor
-    case state: ChatSession.State =>
+    case state: DemoSession.State =>
       userPanel.setCaption(if (state.isLoggedIn) s"Session - Welcome ${ state.name }" else "Session")
       userPanel.self ! state
     // user entered chatroom, update member list
@@ -91,7 +91,7 @@ class ChatUI extends VaactorUI {
       memberList.addAll(members.asJava)
       memberDataProvider.refreshAll()
     // clear, clear message list
-    case ChatUI.Clear =>
+    case DemoUI.Clear =>
       chatList.clear()
       chatDataProvider.refreshAll()
   }

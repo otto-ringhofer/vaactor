@@ -8,7 +8,7 @@ import com.vaadin.ui._
   * @param vaactorUI ui to be used by [[Vaactor]], contains reference to session actor
   * @author Otto Ringhofer
   */
-class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
+class DemoComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
 
   val loginPanel = new HorizontalLayout {
     setSpacing(true)
@@ -18,7 +18,7 @@ class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
       "Login",
       // send login message to session actor
       _ => {
-        val msg = ChatSession.Login(text.getValue)
+        val msg = DemoSession.Login(text.getValue)
         vaactorUI.send2SessionActor(msg)
       })
     )
@@ -28,7 +28,7 @@ class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
     "Logout",
     // send logout message to session actor
     _ => {
-      val msg = ChatSession.Logout
+      val msg = DemoSession.Logout
       vaactorUI.send2SessionActor(msg)
     }
   )
@@ -41,7 +41,7 @@ class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
       "Send",
       // send chat message to session actor, will be augmented with username and sent to chatroom
       _ => {
-        val msg = ChatSession.Message(text.getValue)
+        val msg = DemoSession.Message(text.getValue)
         text.setValue("")
         text.focus()
         vaactorUI.send2SessionActor(msg)
@@ -61,16 +61,16 @@ class ChatComponent(val vaactorUI: VaactorUI) extends Panel with Vaactor {
       setSpacing(true)
       addComponent(messagePanel)
       addComponent(new Button(
-        "Clear",
+        "Clear" //,
         // send clear message to ui
-        _ => { vaactorUI.self ! ChatUI.Clear }
+        // todo        _ => { vaactorUI.self ! DemoUI.Clear }
       ))
     })
   })
 
   def receive: PartialFunction[Any, Unit] = {
     // session state, adjust user interface depending on logged-in state
-    case state: ChatSession.State =>
+    case state: DemoSession.State =>
       loginPanel.setEnabled(!state.isLoggedIn)
       logoutBtn.setEnabled(state.isLoggedIn)
       messagePanel.setEnabled(state.isLoggedIn)

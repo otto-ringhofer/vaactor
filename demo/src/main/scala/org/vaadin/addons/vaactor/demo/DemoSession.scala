@@ -9,7 +9,7 @@ import akka.actor.Actor
   *
   * @author Otto Ringhofer
   */
-object ChatSession {
+object DemoSession {
 
   /** session state
     *
@@ -43,7 +43,7 @@ object ChatSession {
     /** behaviour of session, processes received messages */
     override val sessionBehaviour: Receive = {
       // chat statement from ui, send send text and user name to chatroom
-      case ChatSession.Message(msg) =>
+      case DemoSession.Message(msg) =>
         chatServer ! ChatServer.Statement(sessionState.name, msg)
       // chat statement from chatroom, send to all registerd uis
       case msg: ChatServer.Statement =>
@@ -58,7 +58,7 @@ object ChatSession {
       case msg: ChatServer.Members =>
         broadcast(msg)
       // user login, set state und subscribe in chatroom, send state to all rgistered uis
-      case ChatSession.Login(name) =>
+      case DemoSession.Login(name) =>
         if (name.nonEmpty) {
           // perform login
           sessionState = sessionState.copy(name = name)
@@ -68,7 +68,7 @@ object ChatSession {
         if (sessionState.isLoggedIn) // is/was logged in
           chatServer ! ChatServer.RequestMembers
       // user logout, set state und unsubscribe from chatroom, send state to all rgistered uis
-      case ChatSession.Logout =>
+      case DemoSession.Logout =>
         chatServer ! ChatServer.Unsubscribe(Client(sessionState.name, self))
         sessionState = sessionState.copy(name = "")
         broadcast(sessionState)
