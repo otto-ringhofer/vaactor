@@ -40,12 +40,10 @@ class ExampleServlet extends VaactorServlet {
   value = PushMode.AUTOMATIC,
   transport = Transport.WEBSOCKET
 )
-class ExampleUI extends VaactorUI with Vaactor {
+class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
 
   // counter local to this UI
   var uiCnt = 0
-
-  override val vaactorUI: VaactorUI = this
 
   val stateDisplay = new Label()
   val layout = new VerticalLayout {

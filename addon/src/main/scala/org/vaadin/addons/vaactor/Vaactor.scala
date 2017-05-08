@@ -5,7 +5,7 @@ import com.vaadin.ui.Component
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 
-/** Contains [[VaactorProxyActor]] class */
+/** Contains [[VaactorProxyActor]] class and utility traits */
 object Vaactor {
 
   /** Proxy actor for [[Vaactor]],
@@ -23,6 +23,29 @@ object Vaactor {
       case msg: Any => vaactor.receiveMessage(msg, sender)
     }
 
+  }
+
+  /** Vaadin component with dedicated actor.
+    *
+    * Extends [[Vaactor]] with terminating of actor in `detach` methode of component.
+    */
+  trait VaactorComponent extends Vaactor with Component {
+
+    abstract override def detach(): Unit = {
+      self ! PoisonPill
+      super.detach()
+    }
+
+  }
+
+  /** VaadinUI with dedicated actor.
+    *
+    * Bound to selftpe [[VaactorUI]].
+    * Extends [[Vaactor]] with autimatic definition of vaactorUI as `this`.
+    */
+  trait UIVaactor extends Vaactor {
+    this: VaactorUI =>
+    override val vaactorUI: VaactorUI = this
   }
 
 }
@@ -74,18 +97,5 @@ trait Vaactor {
     * @param msg message to be sent
     */
   def send2SessionActor(msg: Any): Unit = vaactorUI.send2SessionActor(msg, self)
-
-}
-
-/** Vaadin component with dedicated actor.
-  *
-  * Extends [[Vaactor]] with terminating of actor in `detach` methode of component.
-  */
-trait VaactorComponent extends Vaactor with Component {
-
-  abstract override def detach(): Unit = {
-    self ! PoisonPill
-    super.detach()
-  }
 
 }
