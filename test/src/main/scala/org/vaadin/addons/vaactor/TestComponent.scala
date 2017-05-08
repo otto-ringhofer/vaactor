@@ -14,6 +14,8 @@ object TestComponent {
 
   case class RequestText(replyTo: ActorRef)
 
+  case object RequestText
+
   case class ReplyText(txt: String)
 
 }
@@ -39,6 +41,7 @@ class TestComponent(val vaactorUI: VaactorUI, nameSuffix: String)
 
   override def receive: Receive = {
     case RequestText(replyTo) => replyTo ! ReplyText(txt.getValue)
+    case RequestText => sender ! ReplyText(txt.getValue)
   }
 
 }

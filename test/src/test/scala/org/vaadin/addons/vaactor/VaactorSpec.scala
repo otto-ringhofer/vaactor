@@ -42,7 +42,7 @@ class VaactorSpec extends WebBrowserSpec {
       reg.actor ! VaactorSession.RequestSessionState
       expectMsgType[SessionState] shouldBe SessionState(testState)
     }
-    "respond with Text-Content" in {
+    "respond with Text-Content on RequestText(sender)" in {
       val testContent = "$Quaxi"
       forwarder ! Lookup(VaactorActorName)
       val reg = expectMsgType[Registered]
@@ -50,6 +50,17 @@ class VaactorSpec extends WebBrowserSpec {
       click on CompButtonName // seems to trigger Vaadin transport
       Thread.sleep(100) // maybe Click needs some time
       reg.actor ! RequestText(self)
+      expectMsgType[ReplyText] shouldBe ReplyText(testContent)
+      lastSender shouldBe reg.actor
+    }
+    "respond with Text-Content on RequestText" in {
+      val testContent = "$Murksi"
+      forwarder ! Lookup(VaactorActorName)
+      val reg = expectMsgType[Registered]
+      textField(CompTextName).value = testContent
+      click on CompButtonName // seems to trigger Vaadin transport
+      Thread.sleep(100) // maybe Click needs some time
+      reg.actor ! RequestText
       expectMsgType[ReplyText] shouldBe ReplyText(testContent)
       lastSender shouldBe reg.actor
     }

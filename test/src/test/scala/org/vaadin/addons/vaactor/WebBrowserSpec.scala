@@ -20,7 +20,7 @@ abstract class WebBrowserSpec extends AkkaSpec with WebBrowser {
   val RemoteSystemPath = "akka.tcp://test-server@127.0.0.1:2552"
   val ForwarderPath: String = RemoteSystemPath + "/user/forwarder"
 
-  override def afterAll {
+  override def afterAll: Unit = {
     super.afterAll
     quit()
   }

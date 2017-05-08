@@ -7,9 +7,9 @@ import akka.testkit.{ DefaultTimeout, ImplicitSender, TestKit }
 abstract class AkkaSpec extends TestKit(VaactorServlet.system)
   with FreeSpecLike with BeforeAndAfterAll with Matchers with Inside with DefaultTimeout with ImplicitSender {
 
-  override def afterAll = {
+  override def afterAll: Unit = {
     super.afterAll
-    //    VaactorServlet.system.terminate()
+    VaactorServlet.system.terminate()
   }
 
 }
