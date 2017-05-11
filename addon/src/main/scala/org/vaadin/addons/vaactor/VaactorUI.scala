@@ -98,11 +98,11 @@ abstract class VaactorUI extends UI {
   val uiActor: ActorRef = VaactorUI.actorOf(Props(classOf[UiActor]))
 
   // will be initialized in init/attach, not possible before
-  private var _sessionActor: Option[ActorRef] = None
+  private var _sessionActor: ActorRef = _
 
   /** Session actor for this UI */
   // lazy because of late initialization in init/attach
-  lazy val sessionActor: Option[ActorRef] = _sessionActor
+  lazy val sessionActor: ActorRef = _sessionActor
 
   /** Send a message to the session actor.
     *
@@ -112,7 +112,7 @@ abstract class VaactorUI extends UI {
     * @param sender sender of message
     */
   def send2SessionActor(msg: Any, sender: ActorRef = Actor.noSender): Unit =
-    sessionActor foreach { _.tell(msg, sender) }
+    sessionActor.tell(msg, sender)
 
   override def attach(): Unit = {
     super.attach()

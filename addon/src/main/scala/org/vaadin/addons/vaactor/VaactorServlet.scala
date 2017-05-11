@@ -53,6 +53,6 @@ abstract class VaactorServlet extends VaadinServlet
 
   /** stop session actor */
   override def sessionDestroy(event: SessionDestroyEvent): Unit =
-    lookupAndTerminateSessionActor(event.getSession)
+    lookupAndTerminateSessionActor(sessionProps, event.getSession)
 
 }

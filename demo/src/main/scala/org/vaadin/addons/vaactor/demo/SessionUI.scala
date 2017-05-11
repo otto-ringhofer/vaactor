@@ -6,7 +6,6 @@ import com.vaadin.annotations.Push
 import com.vaadin.server.VaadinRequest
 import com.vaadin.shared.communication.PushMode
 import com.vaadin.shared.ui.ui.Transport
-import com.vaadin.ui._
 
 import akka.actor.ActorRef
 
@@ -38,11 +37,9 @@ object SessionUI {
 class SessionUI extends VaactorUI {
 
   override def init(request: VaadinRequest): Unit = {
-    val chatComponent = sessionActor map { actor =>
-      val strategy = new demo.SessionUI.Strategy(actor)
-      new ChatComponent(this, "Vaactor chat with session support", strategy)
-    }
-    setContent(chatComponent.getOrElse(new Label("Servlet din't define sessionProps ;-(")))
+    val strategy = new demo.SessionUI.Strategy(sessionActor)
+    val chatComponent = new ChatComponent(this, "Vaactor chat with session support", strategy)
+    setContent(chatComponent)
   }
 
 }
