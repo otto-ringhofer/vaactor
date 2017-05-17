@@ -45,9 +45,9 @@ object VaactorVaadinSession {
 
   /** Create session actor and store it in VaadinSession.
     *
-    * If props is None, the single instance of [[DefaultSessionActor]] ist used.
+    * If props is None, the single instance of [[DefaultSessionActor]] is used.
     *
-    * @param props   Props for creation oif session actor
+    * @param props   Props for creation of session actor
     * @param session VaadinSession
     */
   def createAndStoreSessionActor(props: Option[Props], session: VaadinSession): Unit = {
@@ -68,7 +68,7 @@ object VaactorVaadinSession {
 
   /** Lookup session actor in VaadinSession and send a PoisonPill to it, if present.
     *
-    * If props is None, the single instance of [[DefaultSessionActor]] ist NOT poisoned.
+    * If props is None, the single instance of [[DefaultSessionActor]] is NOT poisoned.
     *
     * @param session VaadinSession
     */

@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val vaadinVersion = "8.0.5"
+  val vaadinVersion = "8.0.6"
   val servletapiVersion = "3.1.0"
   val slf4jVersion = "1.7.25"
   val configVersion = "1.3.1"

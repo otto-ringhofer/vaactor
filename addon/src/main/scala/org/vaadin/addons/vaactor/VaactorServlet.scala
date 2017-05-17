@@ -15,7 +15,10 @@ import akka.actor.{ ActorSystem, Props }
 object VaactorServlet {
 
   /** the actor system */
-  val system: ActorSystem = ActorSystem(config.getString("system-name"))
+  val system: ActorSystem = ActorSystem(
+    config.getString("system-name"),
+    config.withFallback(loadedConfig)
+  )
 
 }
 
