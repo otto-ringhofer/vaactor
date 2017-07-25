@@ -3,7 +3,7 @@ name := "vaactor"
 lazy val root = project.in(file("."))
   .settings(inThisBuild(Seq(
     organization := "org.vaadin.addons",
-    version := "1.0.0-SNAPSHOT", // change also in reference.conf
+    version := "1.0.0-SNAPSHOT", // change also in reference.conf and MANIFEST.MF
     scalaVersion := "2.12.2",
     crossScalaVersions := Seq("2.12.2"),
     scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation"),
@@ -28,6 +28,7 @@ lazy val root = project.in(file("."))
 lazy val addon = (project in file("addon"))
   .settings(
     name := "vaactor",
+    description := "Vaactor bridges the gap between Vaadin Servlet and Akka Actors",
     libraryDependencies := Dependencies.addonDeps
   )
 

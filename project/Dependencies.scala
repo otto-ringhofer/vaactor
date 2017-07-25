@@ -2,11 +2,11 @@ import sbt._
 
 object Dependencies {
 
-  val vaadinVersion = "8.0.6"
+  val vaadinVersion = "8.1.0"
   val servletapiVersion = "3.1.0"
   val slf4jVersion = "1.7.25"
   val configVersion = "1.3.1"
-  val akkaVersion = "2.5.1"
+  val akkaVersion = "2.5.3"
   val scalatestVersion = "3.0.1"
   val seleniumVersion = "3.4.0"
 
@@ -54,12 +54,12 @@ object Dependencies {
 
   val demoDeps: Seq[ModuleID] = vaadinServletDeps
 
-  val testDeps: Seq[ModuleID] = Seq(
+  val testDeps: Seq[ModuleID] = vaadinServletDeps ++ Seq(
     akkaRemote,
     scalactic,
     scalatest,
     akkaTestkit,
     seleniumJava
-  ) ++ vaadinServletDeps
+  )
 
 }
