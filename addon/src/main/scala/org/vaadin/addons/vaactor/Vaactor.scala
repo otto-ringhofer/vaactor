@@ -75,10 +75,10 @@ object Vaactor {
   trait SubscribeSession extends AttachSession {
 
     /** Subscribe message sent to session actor on attach of component */
-    override val attachMessage = VaactorSession.Subscribe
+    override val attachMessage: Any = VaactorSession.Subscribe
 
     /** Unsubscribe message sent to session actor on detach of component */
-    override val detachMessage = VaactorSession.Unsubscribe
+    override val detachMessage: Any = VaactorSession.Unsubscribe
 
   }
 

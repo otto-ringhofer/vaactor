@@ -38,15 +38,15 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
   extends CustomComponent with Vaactor.AttachSession {
 
   /** Send to session actor on attach */
-  override val attachMessage = Session.Attached
+  override val attachMessage: Any = Session.Attached
 
   /** Send to session actor on detach */
-  override val detachMessage = Session.Detached
+  override val detachMessage: Any = Session.Detached
 
   /** Contains list of messages from chatroom */
   val chatList = new java.util.ArrayList[ChatServer.Statement]()
   val chatDataProvider: ListDataProvider[ChatServer.Statement] = DataProvider.ofCollection[ChatServer.Statement](chatList)
-  val chatPanel = new Grid[ChatServer.Statement]("Chat", chatDataProvider) {
+  val chatPanel: Grid[ChatServer.Statement] = new Grid[ChatServer.Statement]("Chat", chatDataProvider) {
     addColumn(d => d.name)
     addColumn(d => d.msg)
     setWidth(400, Sizeable.Unit.PIXELS)
@@ -55,14 +55,14 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
   /** Contains list of chatroom menbers */
   val memberList = new java.util.ArrayList[String]()
   val memberDataProvider: ListDataProvider[String] = DataProvider.ofCollection[String](memberList)
-  val memberPanel = new ListSelect("Chatroom Members", memberDataProvider) {
+  val memberPanel: ListSelect[String] = new ListSelect("Chatroom Members", memberDataProvider) {
     setWidth(100, Sizeable.Unit.PIXELS)
   }
 
   /** Contains username */
   val userName = new TextField()
 
-  val loginPanel = new HorizontalLayout {
+  val loginPanel: HorizontalLayout = new HorizontalLayout {
     setSpacing(true)
     addComponents(
       userName,
@@ -72,7 +72,7 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
 
   val logoutBtn = new Button("Logout", _ => strategy.logout(userName.getValue, self))
 
-  val messagePanel = new HorizontalLayout {
+  val messagePanel: HorizontalLayout = new HorizontalLayout {
     setSpacing(true)
     val text = new TextField()
     addComponents(

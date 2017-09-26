@@ -46,7 +46,7 @@ class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
   var uiCnt = 0
 
   val stateDisplay = new Label()
-  val layout = new VerticalLayout {
+  val layout: VerticalLayout = new VerticalLayout {
     setMargin(true)
     setSpacing(true)
     addComponent(new Label {
