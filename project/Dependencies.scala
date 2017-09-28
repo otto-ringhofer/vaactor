@@ -62,9 +62,7 @@ object Dependencies {
   //noinspection Annotator
   // Vaadin 8.1 has problems with default jetty in plugin :-(
   // https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-runner
-  //noinspection Annotator
   val jettyLib = "org.eclipse.jetty" % "jetty-runner" % "9.3.21.v20170918" intransitive()
   val jettyMain = "org.eclipse.jetty.runner.Runner"
-
 
 }

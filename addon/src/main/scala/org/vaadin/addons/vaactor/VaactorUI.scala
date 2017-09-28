@@ -45,7 +45,7 @@ object VaactorUI {
 
   private val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
 
-  /** create an actor as child of [[guardian]]
+  /** Create an actor as child of [[guardian]]
     *
     * @param props Props of acctor to be created
     * @return ActorRef of created actor
@@ -88,7 +88,7 @@ object VaactorUI {
 
 /** UI with actors
   *
-  * contains guardian actor for all vaactor-actors
+  * Contains guardian actor for all vaactor-actors
   *
   * @author Otto Ringhofer
   */

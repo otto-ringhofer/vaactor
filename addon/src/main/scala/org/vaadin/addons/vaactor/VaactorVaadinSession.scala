@@ -9,6 +9,8 @@ import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
   * Used by [[VaactorServlet]].
   *
   * Maybe useful for portlet implementation some day ...
+  *
+  * @author Otto Ringhofer
   */
 object VaactorVaadinSession {
 
@@ -27,6 +29,7 @@ object VaactorVaadinSession {
 
   }
 
+  /** The single instance of the default session actor, if no specific session actor is configured. */
   lazy val defaultSessionActor: ActorRef = VaactorSession.actorOf(Props[DefaultSessionActor])
 
   /** Type to be stored in VaadinSession.

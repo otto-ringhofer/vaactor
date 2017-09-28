@@ -46,10 +46,10 @@ object VaactorSession {
   /** Send current session state to sender */
   case object RequestSessionState extends VaactorSessionMessage
 
-  /** Send current session state to all registered subscriberes */
+  /** Send current session state to all registered subscribers */
   case object BroadcastSessionState extends VaactorSessionMessage
 
-  /** Send message to all registered subscriberes - processed by sessionActor and uiActor
+  /** Send message to all registered subscribers - processed by sessionActor and uiActor
     *
     * @param msg message to be sent
     * @tparam T type of message
@@ -82,7 +82,7 @@ object VaactorSession {
     */
   case class ForwardWithSession[T](msg: T, receiver: ActorRef) extends VaactorSessionMessage
 
-  /** Send [[WithSession]] message to all registered subscriberes
+  /** Send [[WithSession]] message to all registered subscribers
     *
     * @param msg message to be wrapped in WithSession
     * @tparam T type of message

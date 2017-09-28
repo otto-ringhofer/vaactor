@@ -2,7 +2,7 @@ package org.vaadin.addons.vaactor.example
 
 import javax.servlet.annotation.WebServlet
 
-import ExampleObject._
+import ExampleObject.globalCnt
 import org.vaadin.addons.vaactor._
 import com.vaadin.annotations.{ Push, VaadinServletConfiguration }
 import com.vaadin.server.VaadinRequest
@@ -49,8 +49,7 @@ class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
   val layout: VerticalLayout = new VerticalLayout {
     setMargin(true)
     setSpacing(true)
-    addComponent(new Label {
-      setValue("Vaactor Example")
+    addComponent(new Label("Vaactor Example") {
       addStyleName(ValoTheme.LABEL_H1)
     })
     addComponent(new Button("Click Me", { _ =>
@@ -63,7 +62,7 @@ class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
 
   override def init(request: VaadinRequest): Unit = { setContent(layout) }
 
-  override def receive: PartialFunction[Any, Unit] = {
+  override def receive: Actor.Receive = {
     case hello: String =>
       globalCnt += 1
       stateDisplay.setValue(s"$hello (globalCnt:$globalCnt)")
