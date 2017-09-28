@@ -11,7 +11,7 @@ import akka.actor.ActorRef
 
 object DirectUI {
 
-  val strategy = new ChatComponent.Strategy {
+  val strategy: ChatComponent.Strategy = new ChatComponent.Strategy {
 
     override def login(name: String, sender: ActorRef): Unit =
       ChatServer.chatServer.tell(ChatServer.Subscribe(ChatServer.Client(name, sender)), sender)

@@ -2,11 +2,10 @@ import sbt._
 
 object Dependencies {
 
-  val vaadinVersion = "8.0.5"
+  val vaadinVersion = "8.1.4"
   val servletapiVersion = "3.1.0"
   val slf4jVersion = "1.7.25"
-  val configVersion = "1.3.1"
-  val akkaVersion = "2.5.1"
+  val akkaVersion = "2.5.4"
   val scalatestVersion = "3.0.1"
   val seleniumVersion = "3.4.0"
 
@@ -15,7 +14,6 @@ object Dependencies {
   val vaadinOrg = "com.vaadin"
 
   val servletApi: ModuleID = "javax.servlet" % "javax.servlet-api" % servletapiVersion % "provided"
-  val config: ModuleID = "com.typesafe" % "config" % configVersion
   val vaadinServer: ModuleID = vaadinOrg % "vaadin-server" % vaadinVersion
   val vaadinClientCompiled: ModuleID = vaadinOrg % "vaadin-client-compiled" % vaadinVersion
   val vaadinThemes: ModuleID = vaadinOrg % "vaadin-themes" % vaadinVersion
@@ -30,15 +28,7 @@ object Dependencies {
   val akkaTestkit: ModuleID = akkaOrg %% "akka-testkit" % akkaVersion % "test"
   val seleniumJava: ModuleID = "org.seleniumhq.selenium" % "selenium-java" % seleniumVersion % "test"
 
-  val vaadinServletDeps = Seq(
-    servletApi,
-    slf4jSimple,
-    vaadinClientCompiled,
-    vaadinThemes
-  )
-
   val addonDeps = Seq(
-    config,
     akkaActor,
     slf4j,
     akkaSlf4j,
@@ -50,16 +40,29 @@ object Dependencies {
     akkaTestkit
   )
 
+  val vaadinServletDeps: Seq[ModuleID] = addonDeps ++ Seq(
+    servletApi,
+    slf4jSimple,
+    vaadinClientCompiled,
+    vaadinThemes
+  )
+
   val exampleDeps: Seq[ModuleID] = vaadinServletDeps
 
   val demoDeps: Seq[ModuleID] = vaadinServletDeps
 
-  val testDeps: Seq[ModuleID] = Seq(
+  val testDeps: Seq[ModuleID] = vaadinServletDeps ++ Seq(
     akkaRemote,
     scalactic,
     scalatest,
     akkaTestkit,
     seleniumJava
-  ) ++ vaadinServletDeps
+  )
+
+  //noinspection Annotator
+  // Vaadin 8.1 has problems with default jetty in plugin :-(
+  // https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-runner
+  val jettyLib = "org.eclipse.jetty" % "jetty-runner" % "9.3.21.v20170918" intransitive()
+  val jettyMain = "org.eclipse.jetty.runner.Runner"
 
 }

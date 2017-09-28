@@ -5,7 +5,10 @@ import com.vaadin.ui.Component
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 
-/** Contains [[VaactorProxyActor]] class and utility traits */
+/** Contains some utility traits and the [[VaactorProxyActor]] class.
+  *
+  * @author Otto Ringhofer
+  */
 object Vaactor {
 
   /** Proxy actor for [[Vaactor]],
@@ -27,7 +30,7 @@ object Vaactor {
 
   /** Vaadin component with dedicated actor.
     *
-    * Extends [[Vaactor]] with terminating of actor in `detach` methode of component.
+    * Extends [[Vaactor]] with termination of actor in `detach` method of component.
     */
   trait VaactorComponent extends Vaactor with Component {
 
@@ -41,7 +44,7 @@ object Vaactor {
   /** VaadinUI with dedicated actor.
     *
     * Bound to selftpe [[VaactorUI]].
-    * Extends [[Vaactor]] with autimatic definition of vaactorUI as `this`.
+    * Extends [[Vaactor]] with automatic definition of vaactorUI as `this`.
     */
   trait UIVaactor extends Vaactor {
     this: VaactorUI =>
@@ -75,10 +78,10 @@ object Vaactor {
   trait SubscribeSession extends AttachSession {
 
     /** Subscribe message sent to session actor on attach of component */
-    override val attachMessage = VaactorSession.Subscribe
+    override val attachMessage: Any = VaactorSession.Subscribe
 
     /** Unsubscribe message sent to session actor on detach of component */
-    override val detachMessage = VaactorSession.Unsubscribe
+    override val detachMessage: Any = VaactorSession.Unsubscribe
 
   }
 
