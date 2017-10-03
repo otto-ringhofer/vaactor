@@ -1,6 +1,0 @@
-Manifest-Version: 1.0
-Vaadin-Package-Version: 1
-Vaadin-Addon: vaactor_2.12-1.0.0-SNAPSHOT.jar
-Implementation-Vendor: Otto Ringhofer
-Implementation-Title: Vaactor
-Implementation-Version: 1.0.0-SNAPSHOT

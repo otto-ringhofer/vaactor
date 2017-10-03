@@ -2,12 +2,12 @@ import sbt._
 
 object Dependencies {
 
-  val vaadinVersion = "8.1.4"
+  val vaadinVersion = "8.1.5"
   val servletapiVersion = "3.1.0"
   val slf4jVersion = "1.7.25"
-  val akkaVersion = "2.5.4"
-  val scalatestVersion = "3.0.1"
-  val seleniumVersion = "3.4.0"
+  val akkaVersion = "2.5.6"
+  val scalatestVersion = "3.0.4"
+  val seleniumVersion = "3.6.0"
 
   val akkaOrg = "com.typesafe.akka"
   val slf4jOrg = "org.slf4j"

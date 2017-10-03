@@ -3,7 +3,7 @@ name := "vaactor"
 lazy val root = project.in(file("."))
   .settings(inThisBuild(Seq(
     organization := "org.vaadin.addons",
-    version := "1.0.0-SNAPSHOT", // change also in reference.conf and MANIFEST.MF
+    version := "1.0.0-SNAPSHOT", // change also in reference.conf
     scalaVersion := "2.12.3",
     crossScalaVersions := Seq("2.12.3"),
     scalacOptions ++= Seq("-feature", "-unchecked", "-deprecation"),
@@ -16,7 +16,16 @@ lazy val addon = (project in file("addon"))
   .settings(
     name := "vaactor",
     description := "Vaactor bridges the gap between Vaadin Servlet and Akka Actors",
-    libraryDependencies := Dependencies.addonDeps
+    libraryDependencies := Dependencies.addonDeps,
+    packageOptions in(Compile, packageBin) ++= Seq(
+      Package.ManifestAttributes("Vaadin-Package-Version" -> "1"),
+      Package.ManifestAttributes("Vaadin-Addon" -> s"vaactor_2.12-${ version.value }.jar"),
+      Package.ManifestAttributes("Implementation-Title" -> "Vaactor"),
+      Package.ManifestAttributes("Implementation-Vendor" -> "Otto Ringhofer"),
+      Package.ManifestAttributes("Specification-Title" -> "Vaactor"),
+      Package.ManifestAttributes("Specification-Vendor" -> "Otto Ringhofer"),
+      Package.ManifestAttributes("Vaadin-License-Title" -> "Apache License 2.0")
+    )
   )
 
 lazy val demo = (project in file("demo"))
