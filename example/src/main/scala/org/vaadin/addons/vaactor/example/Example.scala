@@ -41,6 +41,7 @@ class ExampleServlet extends VaactorServlet {
   transport = Transport.WEBSOCKET
 )
 class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
+  ui =>
 
   // counter local to this UI
   var uiCnt = 0
@@ -58,6 +59,7 @@ class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
     })
     )
     addComponent(stateDisplay)
+    addComponent(new StateButton(ui))
   }
 
   override def init(request: VaadinRequest): Unit = { setContent(layout) }
