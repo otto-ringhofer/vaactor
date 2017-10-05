@@ -80,7 +80,7 @@ class VaactorSpec extends WebBrowserSpec {
       lastSender shouldBe reg.actor
       click on RemoveComponentButtonName
       reg.actor ! RequestText(self)
-      expectNoMsg()
+      expectNoMessage(noMessageWait)
     }
 
     "subscribe and unsubscribe" in {
