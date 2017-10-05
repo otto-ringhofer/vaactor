@@ -2,7 +2,7 @@ import sbt._
 
 object BuildConfig {
 
-  val version = "1.0.0-SNAPSHOT" // change also in reference.conf
+  val version = "1.0.0" // change also in reference.conf
 
   val organization = "org.vaadin.addons"
 
