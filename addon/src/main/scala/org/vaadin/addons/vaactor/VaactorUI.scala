@@ -1,106 +1,137 @@
 package org.vaadin.addons.vaactor
 
 import VaactorUI._
+import org.vaadin.addons.vaactor.VaactorSession.{ Broadcast, Subscribe, Unsubscribe }
+import com.typesafe.config.Config
+import com.vaadin.server.VaadinSession
+import com.vaadin.ui.UI
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
-import vaadin.scala.server.{ ScaladinRequest, ScaladinSession }
-import vaadin.scala.{ PushMode, UI }
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{ Duration, _ }
 
-/** contains guardian class for all vaactor-actors
+/** Creates ui guardian actor as supervisor for all ui actors.
+  *
+  * Contains ui-actor class instantiated for all VaactorUIs
   *
   * @author Otto Ringhofer
   */
 object VaactorUI {
 
-  val uiConfig = config.getConfig("ui")
-
+  /** UiGuardian, creates and supervises all ui actors */
   class UiGuardian extends Actor {
 
-    private var vaactors: Int = 0
+    private var uis: Int = 0
 
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case props: Props =>
-        vaactors += 1
-        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$vaactors"
+        uis += 1
+        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$uis"
         sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
     }
 
   }
 
-  import akka.util.Timeout
+  /** `ui`-subtree of Vaactor configuration */
+  val uiConfig: Config = config.getConfig("ui")
 
-  val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
-
-}
-
-/** UI with actors
-  *
-  * contains guardian actor for all vaactor-actors
-  * is also a vaactor
-  *
-  * @param title             title of ui, default null
-  * @param theme             theme of ui, default null
-  * @param widgetset         widgetset of ui, default from servlet
-  * @param preserveOnRefresh default from configuration `preserve-on-refresh`
-  * @param pushMode          default from configuration `push-mode`
-  * @author Otto Ringhofer
-  */
-abstract class VaactorUI(
-  title: String = null,
-  theme: String = null,
-  widgetset: String = null,
-  preserveOnRefresh: Boolean = uiConfig.getBoolean("preserve-on-refresh"),
-  pushMode: PushMode.Value = uiConfig.getString("push-mode") match {
-    case "automatic" => PushMode.Automatic
-    case "manual" => PushMode.Manual
-  })
-  extends UI(title, theme, widgetset, preserveOnRefresh, pushMode)
-    with Vaactor {
-
-  /** guardian actor, creates all vaactor-actors */
-  // lazy because of DelayedInit from UI - TODO remove after removed in UI
-  lazy val uiGuardian = Vaactor.actorOf(Props(classOf[UiGuardian]))
-
-  /** is ui of its own vaactor */
-  lazy val vaactorUI = this
-
-  // will be initialized in init, not possible before
-  private var _sessionActor: ActorRef = _
-
-  /** session actor for this UI */
-  // lazy because of late initialization in init/attach
-  lazy val sessionActor: ActorRef = _sessionActor
-
-  /** implement this instead of overriding [[init]] */
-  // abstract, must be implemented, can't be forgotten
-  def initVaactorUI(request: ScaladinRequest): Unit
-
-  /** override [[initVaactorUI]] instead of this final function */
-  final override def init(request: ScaladinRequest): Unit = {
-    // attach ist not called, must do it in init()
-    _sessionActor = ScaladinSession.current.getAttribute(classOf[ActorRef])
-    sessionActor ! VaactorSession.SubscribeUI
-    sessionActor ! VaactorSession.RequestSession
-    initVaactorUI(request)
-  }
-
-  override def detach(): Unit = {
-    sessionActor ! VaactorSession.UnsubscribeUI
-    uiGuardian ! PoisonPill // stops also all vaactor children of this guardian
-    super.detach()
-  }
+  /** [[UiGuardian]] actor, creates all ui-actors */
+  val guardian: ActorRef = VaactorServlet.system.actorOf(
+    Props[UiGuardian], uiConfig.getString("guardian-name"))
 
   import akka.pattern.ask
+  import akka.util.Timeout
 
-  /** create an actor as child of [[uiGuardian]]
+  private val askTimeout = Timeout(uiConfig.getInt("ask-timeout").seconds)
+
+  /** Create an actor as child of [[guardian]]
     *
     * @param props Props of acctor to be created
     * @return ActorRef of created actor
     */
   def actorOf(props: Props): ActorRef =
-    Await.result((uiGuardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
+    Await.result((guardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
+
+  /** UiActor, creates and supervises all VaactorActors.
+    *
+    * Handles messages for management of subscribers in ui.
+    *
+    * Is instatiated once for each [[VaactorUI]].
+    */
+  class UiActor extends Actor {
+
+    private[vaactor] var subscribers = Set.empty[ActorRef]
+
+    private var vaactors: Int = 0
+
+    def receive: Receive = {
+      case Broadcast(msg) =>
+        for (subscriber <- subscribers) subscriber.tell(msg, sender)
+      case Subscribe =>
+        subscribers += sender
+      case Subscribe(s) =>
+        subscribers += s
+      case Unsubscribe =>
+        subscribers -= sender
+      case Unsubscribe(s) =>
+        subscribers -= s
+      case props: Props =>
+        vaactors += 1
+        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$vaactors"
+        sender ! context.actorOf(props, name) // create new child actor
+    }
+
+  }
+
+}
+
+/** UI with actors
+  *
+  * Contains guardian actor for all vaactor-actors
+  *
+  * @author Otto Ringhofer
+  */
+abstract class VaactorUI extends UI {
+
+  /** Guardian actor, creates all vaactor-actors */
+  val uiActor: ActorRef = VaactorUI.actorOf(Props(classOf[UiActor]))
+
+  // will be initialized in init/attach, not possible before
+  private var _sessionActor: ActorRef = _
+
+  /** Session actor for this UI */
+  // lazy because of late initialization in init/attach
+  lazy val sessionActor: ActorRef = _sessionActor
+
+  /** Send a message to the session actor.
+    *
+    * No message is sent, if [[VaactorServlet.sessionProps]] is None
+    *
+    * @param msg    message to be sent
+    * @param sender sender of message
+    */
+  def send2SessionActor(msg: Any, sender: ActorRef = Actor.noSender): Unit =
+    sessionActor.tell(msg, sender)
+
+  override def attach(): Unit = {
+    super.attach()
+    _sessionActor = VaactorVaadinSession.lookupSessionActor(VaadinSession.getCurrent)
+  }
+
+  override def detach(): Unit = {
+    uiActor ! PoisonPill // stops also all vaactor children of this guardian
+    super.detach()
+  }
+
+  import akka.pattern.ask
+
+  /** Create an actor as child of [[uiActor]]
+    *
+    * @param props Props of acctor to be created
+    * @return ActorRef of created actor
+    */
+  def actorOf(props: Props): ActorRef =
+    Await.result((uiActor ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
 
 }

@@ -1,88 +1,138 @@
 package org.vaadin.addons.vaactor
 
-import akka.actor.{ Actor, ActorRef, Props }
+import Vaactor._
+import com.vaadin.ui.Component
 
-import scala.concurrent.Await
-import scala.concurrent.duration.{ Duration, _ }
+import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 
-/** contains guardian actor for all ui-actors
+/** Contains some utility traits and the [[VaactorProxyActor]] class.
   *
   * @author Otto Ringhofer
   */
 object Vaactor {
 
-  val vaactorConfig = config.getConfig("vaactor")
+  /** Proxy actor for [[Vaactor]],
+    * calls [[Vaactor.receiveMessage]] of dedicated [[Vaactor]] with every message received.
+    *
+    * [[Vaactor.receiveMessage]] calls [[Vaactor.receive]] function
+    * synchronized by `access` method of dedicated [[Vaactor.vaactorUI]].
+    *
+    * @param vaactor dedicated [[Vaactor]]
+    */
+  class VaactorProxyActor(vaactor: Vaactor) extends Actor {
 
-  class Guardian extends Actor {
-
-    private var uiGuardians: Int = 0
-
-    def receive = {
-      case props: Props =>
-        uiGuardians += 1
-        val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$uiGuardians"
-        sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
+    def receive: PartialFunction[Any, Unit] = {
+      // catch all messages and forward to UI
+      case msg: Any => vaactor.receiveMessage(msg, sender)
     }
 
   }
 
-  /** guardian actor, creates all ui-actors */
-  val guardian = VaactorServlet.system.actorOf(
-    Props[Guardian], vaactorConfig.getString("guardian-name"))
-
-  import akka.pattern.ask
-  import akka.util.Timeout
-
-  private val askTimeout = Timeout(vaactorConfig.getInt("ask-timeout").seconds)
-
-  /** create an actor as child of [[guardian]]
+  /** Vaadin component with dedicated actor.
     *
-    * @param props Props of acctor to be created
-    * @return ActorRef of created actor
+    * Extends [[Vaactor]] with termination of actor in `detach` method of component.
     */
-  def actorOf(props: Props): ActorRef =
-    Await.result((guardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
+  trait VaactorComponent extends Vaactor with Component {
+
+    abstract override def detach(): Unit = {
+      self ! PoisonPill
+      super.detach()
+    }
+
+  }
+
+  /** VaadinUI with dedicated actor.
+    *
+    * Bound to selftpe [[VaactorUI]].
+    * Extends [[Vaactor]] with automatic definition of vaactorUI as `this`.
+    */
+  trait UIVaactor extends Vaactor {
+    this: VaactorUI =>
+    override val vaactorUI: VaactorUI = this
+  }
+
+  /** Vaadin Component with dedicated actor and automatic attach/detach message to session actor.
+    */
+  trait AttachSession extends VaactorComponent {
+
+    /** Message sent to session actor on attach of component */
+    val attachMessage: Any
+
+    /** Message sent to session actor on detach of component */
+    val detachMessage: Any
+
+    abstract override def attach(): Unit = {
+      super.attach()
+      send2SessionActor(attachMessage)
+    }
+
+    abstract override def detach(): Unit = {
+      send2SessionActor(detachMessage)
+      super.detach()
+    }
+
+  }
+
+  /** Vaadin Component with dedicated actor and automatic subscription to session actor.
+    */
+  trait SubscribeSession extends AttachSession {
+
+    /** Subscribe message sent to session actor on attach of component */
+    override val attachMessage: Any = VaactorSession.Subscribe
+
+    /** Unsubscribe message sent to session actor on detach of component */
+    override val detachMessage: Any = VaactorSession.Unsubscribe
+
+  }
 
 }
 
-/** makes a class "feel" like an actor, but synchronized with vaadin ui
+/** Makes a class "feel" like an actor, with `receive` method synchronized with VaadinUI
   *
-  * creates actor, assigns it to implicit `self` value
-  * `receive` is called in context of vaadin ui
+  * Creates actor, assigns it to implicit `self` value,
+  * `receive` is called in context of VaadinUI
   *
   * @author Otto Ringhofer
   */
 trait Vaactor {
-  vaactor =>
+
+  private var _sender: ActorRef = Actor.noSender
 
   /** VaactorUI of this component, used for access of sessionActor and access method */
   val vaactorUI: VaactorUI
 
-  /** actor for this Vaactor */
+  /** Actor dedicated to this Vaactor */
   // implicit injects the `self` ActorRef as sender to `!` function of `ActorRef`
-  implicit lazy val self = vaactorUI.actorOf(Props(classOf[VaactorActor], vaactor))
+  implicit lazy val self: ActorRef = vaactorUI.actorOf(Props(classOf[VaactorProxyActor], this))
 
-  private def logUnprocessed: Actor.Receive = {
-    case msg: Any =>
+  /** The reference sender Actor of the last received message.
+    *
+    * WARNING: Only valid within [[receive]] of the Vaactor itself,
+    * so do not close over it and publish it to other threads!
+    */
+  def sender: ActorRef = _sender
+
+  /** Call [[receive]] of this trait synchronized by VaactorUI.access.
+    * Is used by [[Vaactor.VaactorProxyActor]] to forward received messages to this trait.
+    *
+    * @param msg    message
+    * @param sender sender of message
+    */
+  def receiveMessage(msg: Any, sender: ActorRef): Unit = {
+    _sender = sender
+    vaactorUI.access(() => receive(msg))
+    _sender = Actor.noSender
   }
 
-  // lazy because receive is not yet initialized
-  private lazy val receiveWorker = receive orElse logUnprocessed
-
-  // forward message to receive function of ui, undefined messages are forwarded to logUnprocessed
-  private[vaactor] def receiveMessage(msg: Any): Unit = vaactorUI.access(receiveWorker(msg))
-
-  /** receive function, is called in context of vaadin ui (via ui.access) */
+  /** Receive function, is called in context of VaadinUI (via ui.access) */
   def receive: Actor.Receive
 
-}
-
-private class VaactorActor(vaactor: Vaactor) extends Actor {
-
-  def receive = {
-    // catch all messages and forward to UI
-    case msg: Any =>
-      vaactor.receiveMessage(msg)
-  }
+  /** Send a message to the session actor.
+    *
+    * No message is sent, if [[VaactorServlet.sessionProps]] is None
+    *
+    * @param msg message to be sent
+    */
+  def send2SessionActor(msg: Any): Unit = vaactorUI.send2SessionActor(msg, self)
 
 }

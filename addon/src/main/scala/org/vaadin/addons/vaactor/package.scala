@@ -1,17 +1,17 @@
 package org.vaadin.addons
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ Config, ConfigFactory }
 
-/** library supports usage of actors with vaadin
+/** Library supports usage of [[https://vaadin.com/framework Vaadin]] with [[http://akka.io/ Akka]] actors.
   *
   * @author Otto Ringhofer
   */
 package object vaactor {
 
-  /** complete configuration loaded from config files */
-  val loadedConfig = ConfigFactory.load()
+  /** Complete configuration loaded from config files */
+  val loadedConfig: Config = ConfigFactory.load()
 
-  /** vaactor configuration - subtree */
-  val config = loadedConfig.getConfig("vaactor")
+  /** Vaactor configuration - subtree */
+  val config: Config = loadedConfig.getConfig("vaactor")
 
 }

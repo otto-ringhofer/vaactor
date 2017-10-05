@@ -2,53 +2,84 @@ package org.vaadin.addons.vaactor.example
 
 import javax.servlet.annotation.WebServlet
 
-import org.vaadin.addons.vaactor.{ VaactorServlet, VaactorSession, VaactorUI }
+import ExampleObject.globalCnt
+import org.vaadin.addons.vaactor._
+import com.vaadin.annotations.{ Push, VaadinServletConfiguration }
+import com.vaadin.server.VaadinRequest
+import com.vaadin.shared.communication.PushMode
+import com.vaadin.shared.ui.ui.Transport
+import com.vaadin.ui._
+import com.vaadin.ui.themes.ValoTheme
 
 import akka.actor.{ Actor, Props }
-import vaadin.scala._
-import vaadin.scala.server.ScaladinRequest
 
 /**
   * @author Otto Ringhofer
   */
 
-@WebServlet(urlPatterns = Array("/*"))
-class ExampleServlet extends VaactorServlet(classOf[ExampleUI]) {
+object ExampleObject {
+  // global counter
+  var globalCnt = 0
+}
 
-  override val sessionProps: Props = Props(classOf[ExampleSessionActor])
+@WebServlet(
+  urlPatterns = Array("/*"),
+  asyncSupported = true
+)
+@VaadinServletConfiguration(
+  productionMode = false,
+  ui = classOf[ExampleUI]
+)
+class ExampleServlet extends VaactorServlet {
+
+  override val sessionProps: Option[Props] = Some(Props(classOf[ExampleSessionActor]))
 
 }
 
-class ExampleUI extends VaactorUI {
+@Push(
+  value = PushMode.AUTOMATIC,
+  transport = Transport.WEBSOCKET
+)
+class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
+  ui =>
 
-  val layout = new VerticalLayout {
-    margin = true
-    spacing = true
-    addComponent(new Label {
-      value = "Vaactor Example"
-      styleNames += ValoTheme.LabelH1
+  // counter local to this UI
+  var uiCnt = 0
+
+  val stateDisplay = new Label()
+  val layout: VerticalLayout = new VerticalLayout {
+    setMargin(true)
+    setSpacing(true)
+    addComponent(new Label("Vaactor Example") {
+      addStyleName(ValoTheme.LABEL_H1)
     })
-    addComponent(Button("Click Me", { e =>
-      vaactorUI.sessionActor ! "Thanks for clicking!"
-    }))
+    addComponent(new Button("Click Me", { _ =>
+      uiCnt += 1
+      send2SessionActor(s"Thanks for clicking! (uiCnt:$uiCnt)")
+    })
+    )
+    addComponent(stateDisplay)
+    addComponent(new StateButton(ui))
   }
 
-  override def initVaactorUI(request: ScaladinRequest): Unit = { content = layout }
+  override def init(request: VaadinRequest): Unit = { setContent(layout) }
 
-  def receive = {
-    case hello: String => layout.addComponent(Label(hello))
+  override def receive: Actor.Receive = {
+    case hello: String =>
+      globalCnt += 1
+      stateDisplay.setValue(s"$hello (globalCnt:$globalCnt)")
   }
 
 }
 
-class ExampleSessionActor extends Actor with VaactorSession[String] {
-
-  override val initialSession = ""
+class ExampleSessionActor extends Actor with VaactorSession[Int] {
+  // state is session counter
+  override val initialSessionState = 0
 
   override val sessionBehaviour: Receive = {
-    case name: String =>
-      session = name
-      sender ! s"Session received: $session"
+    case msg: String =>
+      sessionState += 1
+      sender ! s"$msg (sessionCnt:$sessionState)"
   }
 
 }

@@ -1,56 +1,114 @@
 package org.vaadin.addons.vaactor
 
 import VaactorSession._
+import com.typesafe.config.Config
 
 import akka.actor.{ Actor, ActorRef, Props, Stash }
 
-import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-/** contains guardian actor for all session-actors
+/** Vaadin session management with actors.
+  *
+  * Creates session guardian actor as supervisor for all session actors.
+  *
+  * Defines messages used by trait [[VaactorSession]].
   *
   * @author Otto Ringhofer
   */
 object VaactorSession {
 
-  val sessionConfig = config.getConfig("session")
+  protected case class InitialSessionState[S](session: S)
 
-  class Guardian extends Actor {
+  /** SessionGuardian, creates and supervises all session actors */
+  class SessionGuardian extends Actor {
 
     private var sessions: Int = 0
 
-    def receive = {
+    def receive: Receive = {
       case props: Props =>
         sessions += 1
         val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$sessions"
-        sender ! context.actorOf(props, name) // neuen Kind-Actor erzeugen
+        sender ! context.actorOf(props, name) // create new child actor
     }
 
   }
 
-  /** send current session to sender */
-  case object RequestSession
+  /** `session`-subtree of Vaactor configuration */
+  val sessionConfig: Config = config.getConfig("session")
 
-  /** send current session to all registered ui-actors */
-  case object BroadcastSession
+  /** Marker trait for all messages processed by [[VaactorSession.vaactorSessionBehaviour]].
+    *
+    * All messages implementing this sealed trait are defined in object [[VaactorSession]].
+    */
+  sealed trait VaactorSessionMessage
 
-  /** add sender to uiActorSet */
-  case object SubscribeUI
+  /** Send current session state to sender */
+  case object RequestSessionState extends VaactorSessionMessage
 
-  /** remove sender from uiActorSet */
-  case object UnsubscribeUI
+  /** Send current session state to all registered subscribers */
+  case object BroadcastSessionState extends VaactorSessionMessage
 
-  /** guardian actor, creates all session-actors */
-  val guardian = VaactorServlet.system.actorOf(
-    Props[Guardian], sessionConfig.getString("guardian-name"))
+  /** Send message to all registered subscribers - processed by sessionActor and uiActor
+    *
+    * @param msg message to be sent
+    * @tparam T type of message
+    */
+  case class Broadcast[T](msg: T) extends VaactorSessionMessage
+
+  /** Register sender as subscriber  - processed by sessionActor and uiActor */
+  case object Subscribe extends VaactorSessionMessage
+
+  /** Register actor as subscriber - processed by sessionActor and uiActor
+    *
+    * @param actor ActorRef of suscriber
+    */
+  case class Subscribe(actor: ActorRef) extends VaactorSessionMessage
+
+  /** Remove sender from list of subscribers  - processed by sessionActor and uiActor */
+  case object Unsubscribe extends VaactorSessionMessage
+
+  /** Remove actor from list of subscribers - processed by sessionActor and uiActor
+    *
+    * @param actor ActorRef of subscriber to be removed
+    */
+  case class Unsubscribe(actor: ActorRef) extends VaactorSessionMessage
+
+  /** Send [[WithSession]] message to receiver
+    *
+    * @param msg      message to be wrapped in WithSession
+    * @param receiver desired receiver of WithSession message
+    * @tparam T type of message
+    */
+  case class ForwardWithSession[T](msg: T, receiver: ActorRef) extends VaactorSessionMessage
+
+  /** Send [[WithSession]] message to all registered subscribers
+    *
+    * @param msg message to be wrapped in WithSession
+    * @tparam T type of message
+    */
+  case class BroadcastWithSession[T](msg: T) extends VaactorSessionMessage
+
+  /** Wrap message and session state.
+    * Is sent by session actor on request.
+    *
+    * @param session current session state
+    * @param msg     message
+    * @tparam S type of session state
+    * @tparam T type of message
+    */
+  case class WithSession[S, T](session: S, msg: T)
+
+  /** [[SessionGuardian]] actor, creates all session-actors */
+  val guardian: ActorRef = VaactorServlet.system.actorOf(
+    Props[SessionGuardian], sessionConfig.getString("guardian-name"))
 
   import akka.pattern.ask
   import akka.util.Timeout
 
   private val askTimeout = Timeout(sessionConfig.getInt("ask-timeout").seconds)
 
-  /** create an actor as child of [[guardian]]
+  /** Create an actor as child of [[guardian]]
     *
     * @param props Props of acctor to be created
     * @return ActorRef of created actor
@@ -60,11 +118,13 @@ object VaactorSession {
 
 }
 
-/** helper trait for session actors
+/** Helper trait for session actors
   *
-  * handles session state variable
-  * handles messages for management of ui-actors in session
-  * keeps state during restart
+  * Handles session state variable.
+  *
+  * Handles messages for management of subscribers in session.
+  *
+  * Preserves session state during restart.
   *
   * @tparam S type of session state
   * @author Otto Ringhofer
@@ -72,60 +132,76 @@ object VaactorSession {
 trait VaactorSession[S] extends Stash {
   this: Actor =>
 
-  private case class InitialSession(session: S)
+  /** Defines initial session state, ist set after creation of actor.
+    *
+    * Is NOT set after restart of actor.
+    */
+  val initialSessionState: S
 
-  /** returns initial value of session */
-  val initialSession: S
-
-  /** defines behaviour of session actor */
+  /** Handles all messages not handled by this trait */
   val sessionBehaviour: Receive
 
-  private[vaactor] val uiActors = mutable.Set.empty[ActorRef]
+  private[vaactor] var subscribers = Set.empty[ActorRef]
 
-  private var _session = initialSession
+  private var _sessionState = initialSessionState
 
-  /** returns current session */
-  def session: S = _session
+  /** Return current session state */
+  def sessionState: S = _sessionState
 
-  /** sets current session */
-  def session_=(s: S): Unit = _session = s
+  /** Set current session state */
+  def sessionState_=(s: S): Unit = _sessionState = s
 
-  /** send message to all ui-actors in this session
+  /** Send message to all subscribers in this session
     *
-    * @param msg message to be sent
+    * @param msg    message to be sent
+    * @param sender sender of message
+    * @tparam T type of message
     */
-  def broadcast(msg: Any): Unit = for (ui <- uiActors) ui ! msg
+  def broadcast[T](msg: T, sender: ActorRef = self): Unit =
+    for (subscriber <- subscribers) subscriber.tell(msg, sender)
 
-  /** initialize session, will switch behaviour */
+  /** Initialize session state, will switch behaviour */
   override def preStart(): Unit = {
-    self ! InitialSession(initialSession)
+    self ! InitialSessionState(initialSessionState)
   }
 
-  /** sends current session to next instance after restart, will switch behaviour */
+  /** Send current session state to next instance after restart, will switch behaviour */
   override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
-    self ! InitialSession(session)
+    self ! InitialSessionState(sessionState)
   }
 
-  /** inhibits call to preStart during restart */
+  /** Inhibit call to preStart during restart */
   override def postRestart(reason: Throwable): Unit = {}
 
-  /** behaviour handles all messages defined in [[VaactorSession]] */
+  /** Handle all messages marked by [[VaactorSession.VaactorSessionMessage]] */
   val vaactorSessionBehaviour: Receive = {
-    case RequestSession =>
-      sender ! session
-    case BroadcastSession =>
-      broadcast(session)
-    case SubscribeUI =>
-      uiActors += sender
-    case UnsubscribeUI =>
-      uiActors -= sender
+    case vaactorSessionMessage: VaactorSessionMessage => vaactorSessionMessage match {
+      case RequestSessionState =>
+        sender.forward(sessionState)
+      case ForwardWithSession(msg, receiver) =>
+        receiver.forward(WithSession(sessionState, msg))
+      case BroadcastSessionState =>
+        broadcast(sessionState, sender)
+      case Broadcast(msg) =>
+        broadcast(msg, sender)
+      case BroadcastWithSession(msg) =>
+        broadcast(WithSession(sessionState, msg), sender)
+      case Subscribe =>
+        subscribers += sender
+      case Subscribe(s) =>
+        subscribers += s
+      case Unsubscribe =>
+        subscribers -= sender
+      case Unsubscribe(s) =>
+        subscribers -= s
+    }
   }
 
-  /** initial behaviour, receives initial session */
+  /** Initial behaviour, waits for [[VaactorSession.InitialSessionState]] message */
   final val receive: Receive = {
-    case InitialSession(s) =>
-      session = s
-      context.become(sessionBehaviour orElse vaactorSessionBehaviour)
+    case InitialSessionState(s) =>
+      sessionState = s.asInstanceOf[S]
+      context.become(vaactorSessionBehaviour orElse sessionBehaviour)
       unstashAll()
     case _ =>
       stash()

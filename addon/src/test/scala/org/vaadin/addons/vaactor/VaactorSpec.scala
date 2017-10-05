@@ -11,7 +11,7 @@ object VaactorSpec {
 
   class TestVaactor(val vaactorUI: VaactorUI) extends Vaactor {
 
-    def receive = {
+    def receive: PartialFunction[Any, Unit] = {
       case VaactorTestMsg(msg, probe) => probe ! msg
     }
 
@@ -21,17 +21,15 @@ object VaactorSpec {
 
 class VaactorSpec extends AkkaSpec {
 
-  "Vaactor" should "create self actor" in {
-    val ui = new TestUI()
-    val va = new TestVaactor(ui)
-    va.self.path.name shouldBe "vaactor-UiGuardian-1-VaactorActor-1"
-  }
-
-  it should "create actor calling receive" in {
-    val ui = new TestUI()
-    val va = new TestVaactor(ui)
-    va.self ! VaactorTestMsg("$test", self)
-    expectMsg("$test")
+  "Vaactor should" - {
+    "create self actor" in {
+      val ui = new TestUI()
+      val va = new TestVaactor(ui)
+      va.self.path.name should startWith("ui-UiActor-")
+      va.self.path.name should include("-VaactorProxyActor-")
+    }
   }
 
 }
+
+

@@ -7,12 +7,13 @@ import akka.testkit.{ DefaultTimeout, ImplicitSender, TestKit }
 import scala.concurrent.duration._
 
 abstract class AkkaSpec extends TestKit(VaactorServlet.system)
-  with FreeSpecLike with BeforeAndAfterAll with Matchers with Inside
-  with DefaultTimeout with ImplicitSender {
+  with FreeSpecLike with BeforeAndAfterAll with Matchers with Inside with DefaultTimeout with ImplicitSender {
 
-  implicit val waittime: FiniteDuration = 500.millis
+  val noMessageWait: FiniteDuration = 1.seconds
 
-  override def afterAll {
+  override def afterAll: Unit = {
+    super.afterAll
+    VaactorServlet.system.terminate()
   }
 
 }

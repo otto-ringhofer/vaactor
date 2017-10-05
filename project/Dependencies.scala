@@ -2,39 +2,67 @@ import sbt._
 
 object Dependencies {
 
-  private val vaadinVersion = "7.5.10"
-  private val akkaVersion = "2.4.7"
+  val vaadinVersion = "8.1.5"
+  val servletapiVersion = "3.1.0"
+  val slf4jVersion = "1.7.25"
+  val akkaVersion = "2.5.6"
+  val scalatestVersion = "3.0.4"
+  val seleniumVersion = "3.6.0"
 
-  private val vaadin = "com.vaadin" % "vaadin-server" % vaadinVersion
-  private val vaadinClientCompiled = "com.vaadin" % "vaadin-client-compiled" % vaadinVersion
-  private val vaadinThemes = "com.vaadin" % "vaadin-themes" % vaadinVersion
-  private val vaadinPush = "com.vaadin" % "vaadin-push" % vaadinVersion
-  private val servletApi = "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided"
-  private val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaVersion
-  private val scaladin = "org.vaadin.addons" %% "scaladin" % "3.2-SNAPSHOT"
-  private val typesafeConfig = "com.typesafe" % "config" % "1.3.0"
-  private val scalatest = "org.scalatest" % "scalatest_2.11" % "2.2.6" % "test"
-  private val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test"
+  val akkaOrg = "com.typesafe.akka"
+  val slf4jOrg = "org.slf4j"
+  val vaadinOrg = "com.vaadin"
+
+  val servletApi: ModuleID = "javax.servlet" % "javax.servlet-api" % servletapiVersion % "provided"
+  val vaadinServer: ModuleID = vaadinOrg % "vaadin-server" % vaadinVersion
+  val vaadinClientCompiled: ModuleID = vaadinOrg % "vaadin-client-compiled" % vaadinVersion
+  val vaadinThemes: ModuleID = vaadinOrg % "vaadin-themes" % vaadinVersion
+  val vaadinPush: ModuleID = vaadinOrg % "vaadin-push" % vaadinVersion
+  val slf4j: ModuleID = slf4jOrg % "slf4j-api" % slf4jVersion % "provided"
+  val slf4jSimple: ModuleID = slf4jOrg % "slf4j-simple" % slf4jVersion
+  val akkaActor: ModuleID = akkaOrg %% "akka-actor" % akkaVersion
+  val akkaSlf4j: ModuleID = akkaOrg %% "akka-slf4j" % akkaVersion
+  val akkaRemote: ModuleID = akkaOrg %% "akka-remote" % akkaVersion
+  val scalactic: ModuleID = "org.scalactic" %% "scalactic" % scalatestVersion % "test"
+  val scalatest: ModuleID = "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+  val akkaTestkit: ModuleID = akkaOrg %% "akka-testkit" % akkaVersion % "test"
+  val seleniumJava: ModuleID = "org.seleniumhq.selenium" % "selenium-java" % seleniumVersion % "test"
 
   val addonDeps = Seq(
-    vaadin,
+    akkaActor,
+    slf4j,
+    akkaSlf4j,
+    vaadinServer,
     vaadinPush,
     servletApi,
-    akkaActor,
-    typesafeConfig,
-    scaladin,
+    scalactic,
     scalatest,
     akkaTestkit
   )
 
-  val demoDeps = Seq(
+  val vaadinServletDeps: Seq[ModuleID] = addonDeps ++ Seq(
+    servletApi,
+    slf4jSimple,
     vaadinClientCompiled,
     vaadinThemes
   )
 
-  val exampleDeps = Seq(
-    vaadinClientCompiled,
-    vaadinThemes
+  val exampleDeps: Seq[ModuleID] = vaadinServletDeps
+
+  val demoDeps: Seq[ModuleID] = vaadinServletDeps
+
+  val testDeps: Seq[ModuleID] = vaadinServletDeps ++ Seq(
+    akkaRemote,
+    scalactic,
+    scalatest,
+    akkaTestkit,
+    seleniumJava
   )
+
+  //noinspection Annotator
+  // Vaadin 8.1 has problems with default jetty in plugin :-(
+  // https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-runner
+  val jettyLib = "org.eclipse.jetty" % "jetty-runner" % "9.3.21.v20170918" intransitive()
+  val jettyMain = "org.eclipse.jetty.runner.Runner"
 
 }

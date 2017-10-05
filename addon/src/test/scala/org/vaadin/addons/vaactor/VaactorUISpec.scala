@@ -1,83 +1,109 @@
 package org.vaadin.addons.vaactor
 
 import VaactorUISpec._
+import org.vaadin.addons.vaactor.VaactorSession._
+import org.vaadin.addons.vaactor.VaactorSessionSpec.kill
+import org.vaadin.addons.vaactor.VaactorUI._
+import com.vaadin.server.VaadinRequest
 
 import akka.actor.{ ActorRef, Props }
-import vaadin.scala.PushMode
-import vaadin.scala.server.ScaladinRequest
+import akka.testkit.{ TestActorRef, TestActors, TestProbe }
 
 object VaactorUISpec {
-
-  class ParamUI(title: String, theme: String, widgetset: String,
-    preserveOnRefresh: Boolean, pushMode: PushMode.Value)
-    extends VaactorUI(title, theme, widgetset, preserveOnRefresh, pushMode) {
-
-    override def initVaactorUI(request: ScaladinRequest): Unit = ???
-
-    def receive = ???
-
-  }
 
   case class UiTestMsg(msg: String, probe: ActorRef)
 
   class TestUI extends VaactorUI {
 
-    override def initVaactorUI(request: ScaladinRequest): Unit = ???
-
-    def receive = {
-      case UiTestMsg(msg, probe) => probe ! msg
-    }
-
-    override def access(runnable: => Unit): Unit = runnable
+    override def init(request: VaadinRequest): Unit = {}
 
   }
 
 }
 
 class VaactorUISpec extends AkkaSpec {
-
-  "VaactorUI" should "set default constructor parameters" in {
-    val ui = new TestUI()
-    ui.title shouldBe None
-    ui.theme shouldBe null
-    ui.widgetset shouldBe None
-    ui.preserveOnRefresh shouldBe false
-    ui.pushMode shouldBe PushMode.Automatic
+  "object VaactorUI" - {
+    "guardian" - {
+      "must not be null" in {
+        VaactorUI.guardian should not be null
+      }
+      "must respond to Props Message with ActorRef with correct path" in {
+        VaactorUI.guardian ! TestActors.echoActorProps
+        val ref = expectMsgType[ActorRef](waittime)
+        ref.path.toStringWithoutAddress should startWith("/user/ui/ui-EchoActor-")
+        kill(ref)
+      }
+    }
+    "actorOf" - {
+      "must create actor with correct path supervised by guardian" in {
+        val ref = VaactorUI.actorOf(TestActors.echoActorProps)
+        ref.path.toStringWithoutAddress should startWith("/user/ui/ui-EchoActor-")
+        kill(ref)
+      }
+    }
   }
 
-  it should "set specific constructor parameters" in {
-    val ui = new ParamUI(title = "$title", theme = "$theme", widgetset = "$widgetset",
-      preserveOnRefresh = true, pushMode = PushMode.Manual)
-    ui.title shouldBe Some("$title")
-    ui.theme shouldBe "$theme"
-    ui.widgetset shouldBe Some("$widgetset")
-    ui.preserveOnRefresh shouldBe true
-    ui.pushMode shouldBe PushMode.Manual
+  "class VaactorUI.UiActor" - {
+    "must manage sender in subscribers on Subscribe and Unsubscribe" in {
+      val uia = TestActorRef[VaactorUI.UiActor]
+      val tp = TestProbe()
+
+      def subscribers = uia.underlyingActor.subscribers
+
+      subscribers.size shouldBe 0 // initially empty
+      uia ! Subscribe
+      subscribers.size shouldBe 1 // sender added
+      subscribers.contains(self) shouldBe true
+      uia ! Subscribe
+      subscribers.size shouldBe 1 // no duplicates
+      subscribers.contains(self) shouldBe true
+      uia ! Subscribe(tp.ref)
+      subscribers.size shouldBe 2 // testprobe added
+      subscribers.contains(self) shouldBe true
+      subscribers.contains(tp.ref) shouldBe true
+      uia ! Unsubscribe
+      subscribers.size shouldBe 1 // sender removed
+      subscribers.contains(self) shouldBe false
+      subscribers.contains(tp.ref) shouldBe true
+      uia ! Unsubscribe(tp.ref)
+      subscribers.size shouldBe 0 // sender removed
+      kill(uia)
+    }
+    "must send message to all subscribers on Broadcast(msg)" in {
+      val sa: ActorRef = VaactorUI.actorOf(Props[UiActor])
+      val tp = TestProbe()
+      val msg = "Hi"
+      sa ! Subscribe
+      sa ! Subscribe(tp.ref)
+      sa ! Broadcast(msg)
+      expectMsgType[String](waittime) shouldBe msg
+      lastSender shouldBe self
+      tp.expectMsgType[String](waittime) shouldBe msg
+      tp.lastSender shouldBe self
+      kill(sa)
+    }
   }
 
-  it should "create uiGuardian" in {
-    val ui = new TestUI()
-    ui.uiGuardian.path.name shouldBe "vaactor-UiGuardian-1"
-  }
-
-  "VaactorUI.actorOf" should "create actor with proper name" in {
-    val ui = new TestUI()
-    val actor = ui.actorOf(Props(classOf[VaactorActor], ui))
-    actor.path.name shouldBe "vaactor-UiGuardian-2-VaactorActor-1"
-  }
-
-
-  it should "create actor calling receive" in {
-    val ui = new TestUI()
-    val actor = ui.actorOf(Props(classOf[VaactorActor], ui))
-    actor ! UiTestMsg("$test", self)
-    expectMsg("$test")
-  }
-
-  it should "create self actor calling receive" in {
-    val ui = new TestUI()
-    ui.self ! UiTestMsg("$test", self)
-    expectMsg("$test")
+  "class VaactorUI - TestUI extends VaactorUI" - {
+    "uiActor" - {
+      val ui = new TestUI()
+      "must be created with correct name" in {
+        ui.uiActor.path.toStringWithoutAddress should startWith("/user/ui/ui-UiActor-")
+      }
+      "must send message to all subscribers on Broadcast(msg)" in {
+        val ui = new TestUI()
+        val tp = TestProbe()
+        val msg = "Hi"
+        ui.uiActor ! Subscribe
+        ui.uiActor ! Subscribe(tp.ref)
+        ui.uiActor ! Broadcast(msg)
+        expectMsgType[String](waittime) shouldBe msg
+        lastSender shouldBe self
+        tp.expectMsgType[String](waittime) shouldBe msg
+        tp.lastSender shouldBe self
+      }
+      kill(ui.uiActor)
+    }
   }
 
 }
