@@ -19,7 +19,12 @@ import akka.actor.{ Actor, Props }
 
 object ExampleObject {
   // global counter
-  var globalCnt = 0
+  private[this] var _globalCnt = 0
+
+  def globalCnt: Int = this.synchronized { _globalCnt }
+
+  def globalCnt_=(value: Int): Unit = this.synchronized { _globalCnt = value }
+
 }
 
 @WebServlet(
