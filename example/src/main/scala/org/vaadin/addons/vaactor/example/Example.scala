@@ -11,6 +11,7 @@ import com.vaadin.shared.ui.ui.Transport
 import com.vaadin.ui._
 import com.vaadin.ui.themes.ValoTheme
 
+import akka.actor.Actor.Receive
 import akka.actor.{ Actor, Props }
 
 /**
@@ -64,7 +65,7 @@ class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
     })
     )
     addComponent(stateDisplay)
-    addComponent(new StateButton(ui))
+    addComponent(new ExampleStateButton(ui))
   }
 
   override def init(request: VaadinRequest): Unit = { setContent(layout) }
@@ -85,6 +86,17 @@ class ExampleSessionActor extends Actor with VaactorSession[Int] {
     case msg: String =>
       sessionState += 1
       sender ! s"$msg (sessionCnt:$sessionState)"
+  }
+
+}
+
+class ExampleStateButton(val vaactorUI: VaactorUI) extends Button with Vaactor {
+
+  setCaption("SessionState")
+  addClickListener { _ => vaactorUI.sessionActor ! VaactorSession.RequestSessionState }
+
+  override def receive: Receive = {
+    case state: Int => setCaption(s"SessionState is $state")
   }
 
 }
