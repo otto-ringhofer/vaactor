@@ -18,7 +18,7 @@ import scala.concurrent.duration._
   */
 object VaactorSession {
 
-  protected case class InitialSessionState[S](session: S)
+  protected case class InitialSessionState[S](session: S, subscribers: Set[ActorRef])
 
   /** SessionGuardian, creates and supervises all session actors */
   class SessionGuardian extends Actor {
@@ -124,7 +124,7 @@ object VaactorSession {
   *
   * Handles messages for management of subscribers in session.
   *
-  * Preserves session state during restart.
+  * Preserves session state and subscribers during restart.
   *
   * @tparam S type of session state
   * @author Otto Ringhofer
@@ -162,12 +162,12 @@ trait VaactorSession[S] extends Stash {
 
   /** Initialize session state, will switch behaviour */
   override def preStart(): Unit = {
-    self ! InitialSessionState(initialSessionState)
+    self ! InitialSessionState(initialSessionState, Set.empty[ActorRef])
   }
 
   /** Send current session state to next instance after restart, will switch behaviour */
   override def preRestart(reason: Throwable, message: Option[Any]): Unit = {
-    self ! InitialSessionState(sessionState)
+    self ! InitialSessionState(sessionState, subscribers)
   }
 
   /** Inhibit call to preStart during restart */
@@ -199,8 +199,9 @@ trait VaactorSession[S] extends Stash {
 
   /** Initial behaviour, waits for [[VaactorSession.InitialSessionState]] message */
   final val receive: Receive = {
-    case InitialSessionState(s) =>
-      sessionState = s.asInstanceOf[S]
+    case InitialSessionState(state, subs) =>
+      sessionState = state.asInstanceOf[S]
+      subscribers = subs
       context.become(vaactorSessionBehaviour orElse sessionBehaviour)
       unstashAll()
     case _ =>
