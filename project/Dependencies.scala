@@ -2,31 +2,31 @@ import sbt._
 
 object Dependencies {
 
-  val vaadinVersion = "8.1.5"
+  val vaadinVersion = "8.3.1"
   val servletapiVersion = "3.1.0"
   val slf4jVersion = "1.7.25"
-  val akkaVersion = "2.5.6"
-  val scalatestVersion = "3.0.4"
-  val seleniumVersion = "3.6.0"
+  val akkaVersion = "2.5.11"
+  val scalatestVersion = "3.0.5"
+  val seleniumVersion = "3.10.0"
 
   val akkaOrg = "com.typesafe.akka"
   val slf4jOrg = "org.slf4j"
   val vaadinOrg = "com.vaadin"
 
-  val servletApi: ModuleID = "javax.servlet" % "javax.servlet-api" % servletapiVersion % "provided"
-  val vaadinServer: ModuleID = vaadinOrg % "vaadin-server" % vaadinVersion
-  val vaadinClientCompiled: ModuleID = vaadinOrg % "vaadin-client-compiled" % vaadinVersion
-  val vaadinThemes: ModuleID = vaadinOrg % "vaadin-themes" % vaadinVersion
-  val vaadinPush: ModuleID = vaadinOrg % "vaadin-push" % vaadinVersion
-  val slf4j: ModuleID = slf4jOrg % "slf4j-api" % slf4jVersion % "provided"
-  val slf4jSimple: ModuleID = slf4jOrg % "slf4j-simple" % slf4jVersion
-  val akkaActor: ModuleID = akkaOrg %% "akka-actor" % akkaVersion
-  val akkaSlf4j: ModuleID = akkaOrg %% "akka-slf4j" % akkaVersion
-  val akkaRemote: ModuleID = akkaOrg %% "akka-remote" % akkaVersion
-  val scalactic: ModuleID = "org.scalactic" %% "scalactic" % scalatestVersion % "test"
-  val scalatest: ModuleID = "org.scalatest" %% "scalatest" % scalatestVersion % "test"
-  val akkaTestkit: ModuleID = akkaOrg %% "akka-testkit" % akkaVersion % "test"
-  val seleniumJava: ModuleID = "org.seleniumhq.selenium" % "selenium-java" % seleniumVersion % "test"
+  val servletApi = "javax.servlet" % "javax.servlet-api" % servletapiVersion % "provided"
+  val vaadinServer = vaadinOrg % "vaadin-server" % vaadinVersion
+  val vaadinClientCompiled = vaadinOrg % "vaadin-client-compiled" % vaadinVersion
+  val vaadinThemes = vaadinOrg % "vaadin-themes" % vaadinVersion
+  val vaadinPush = vaadinOrg % "vaadin-push" % vaadinVersion
+  val slf4j = slf4jOrg % "slf4j-api" % slf4jVersion % "provided"
+  val slf4jSimple = slf4jOrg % "slf4j-simple" % slf4jVersion
+  val akkaActor = akkaOrg %% "akka-actor" % akkaVersion
+  val akkaSlf4j = akkaOrg %% "akka-slf4j" % akkaVersion
+  val akkaRemote = akkaOrg %% "akka-remote" % akkaVersion
+  val scalactic = "org.scalactic" %% "scalactic" % scalatestVersion % "test"
+  val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+  val akkaTestkit = akkaOrg %% "akka-testkit" % akkaVersion % "test"
+  val seleniumJava = "org.seleniumhq.selenium" % "selenium-java" % seleniumVersion % "test"
 
   val addonDeps = Seq(
     akkaActor,
