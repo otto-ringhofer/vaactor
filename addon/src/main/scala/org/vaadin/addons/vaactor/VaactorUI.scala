@@ -24,7 +24,7 @@ object VaactorUI {
 
     private var uis: Int = 0
 
-    def receive: PartialFunction[Any, Unit] = {
+    def receive: Receive = {
       case props: Props =>
         uis += 1
         val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$uis"

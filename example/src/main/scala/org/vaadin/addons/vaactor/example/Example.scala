@@ -70,7 +70,7 @@ class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
 
   override def init(request: VaadinRequest): Unit = { setContent(layout) }
 
-  override def receive: Actor.Receive = {
+  override def receive: Receive = {
     case hello: String =>
       globalCnt += 1
       stateDisplay.setValue(s"$hello (globalCnt:$globalCnt)")
