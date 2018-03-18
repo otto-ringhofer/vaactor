@@ -10,6 +10,7 @@ import com.vaadin.shared.ui.ui.Transport
 import com.vaadin.ui._
 import com.vaadin.ui.themes.ValoTheme
 
+import akka.actor.Actor.Receive
 import akka.actor.ActorRef
 
 import scala.collection.JavaConverters._
@@ -129,7 +130,7 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
 
   self ! ChatServer.SubscriptionCancelled("")
 
-  override def receive: PartialFunction[Any, Unit] = {
+  override def receive: Receive = {
     // User entered chatroom, update member list
     case ChatServer.Enter(name) =>
       Notification.show(s"$name entered the chatroom")

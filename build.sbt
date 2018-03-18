@@ -26,7 +26,6 @@ lazy val demo = (project in file("demo"))
     name := s"${ BuildConfig.name }-demo",
     libraryDependencies ++= Dependencies.demoDeps,
     containerLibs in Jetty := Seq(Dependencies.jettyLib),
-    containerMain in Jetty := Dependencies.jettyMain
   ).dependsOn(addon)
 
 lazy val example = (project in file("example"))
@@ -35,7 +34,6 @@ lazy val example = (project in file("example"))
     name := s"${ BuildConfig.name }-example",
     libraryDependencies ++= Dependencies.exampleDeps,
     containerLibs in Jetty := Seq(Dependencies.jettyLib),
-    containerMain in Jetty := Dependencies.jettyMain
   ).dependsOn(addon)
 
 lazy val test = (project in file("test"))
@@ -44,6 +42,5 @@ lazy val test = (project in file("test"))
     name := s"${ BuildConfig.name }-test",
     libraryDependencies ++= Dependencies.testDeps,
     containerLibs in Jetty := Seq(Dependencies.jettyLib),
-    containerMain in Jetty := Dependencies.jettyMain,
     parallelExecution in Test := false
   ).dependsOn(addon)
