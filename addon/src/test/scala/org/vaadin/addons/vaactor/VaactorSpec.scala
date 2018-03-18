@@ -3,6 +3,7 @@ package org.vaadin.addons.vaactor
 import VaactorSpec._
 import VaactorUISpec._
 
+import akka.actor.Actor.Receive
 import akka.actor.ActorRef
 
 object VaactorSpec {
@@ -11,7 +12,7 @@ object VaactorSpec {
 
   class TestVaactor(val vaactorUI: VaactorUI) extends Vaactor {
 
-    def receive: PartialFunction[Any, Unit] = {
+    def receive: Receive = {
       case VaactorTestMsg(msg, probe) => probe ! msg
     }
 

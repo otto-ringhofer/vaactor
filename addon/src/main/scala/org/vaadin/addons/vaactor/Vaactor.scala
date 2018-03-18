@@ -21,7 +21,7 @@ object Vaactor {
     */
   class VaactorProxyActor(vaactor: Vaactor) extends Actor {
 
-    def receive: PartialFunction[Any, Unit] = {
+    def receive: Receive = {
       // catch all messages and forward to UI
       case msg: Any => vaactor.receiveMessage(msg, sender)
     }
@@ -115,12 +115,14 @@ trait Vaactor {
   /** Call [[receive]] of this trait synchronized by VaactorUI.access.
     * Is used by [[Vaactor.VaactorProxyActor]] to forward received messages to this trait.
     *
+    * Discards all messages not proccessed by [[Vaactor.receive]]
+    *
     * @param msg    message
     * @param sender sender of message
     */
   def receiveMessage(msg: Any, sender: ActorRef): Unit = {
     _sender = sender
-    vaactorUI.access(() => receive(msg))
+    vaactorUI.access(() => receive.applyOrElse(msg, (a: Any) => VaactorServlet.system.deadLetters ! a))
     _sender = Actor.noSender
   }
 

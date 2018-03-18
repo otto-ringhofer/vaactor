@@ -32,10 +32,10 @@ resolvers ++= Seq(
   "vaadin-addons" at "http://maven.vaadin.com/vaadin-addons"
 )
 
-val vaadinVersion = "8.1.5"
-val akkaVersion = "2.5.6"
+val vaadinVersion = "8.3.1"
+val akkaVersion = "2.5.11"
 libraryDependencies ++= Seq(
-  "org.vaadin.addons" % "vaactor" % "1.0.0",
+  "org.vaadin.addons" % "vaactor" % "1.0.2",
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
   "com.vaadin" % "vaadin-server" % vaadinVersion,
   "com.vaadin" % "vaadin-client-compiled" % vaadinVersion,
@@ -44,7 +44,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % akkaVersion
 )
 ```
-Note the `"org.vaadin.addons" % "vaactor" % "1.0.0"` line -
+Note the `"org.vaadin.addons" % "vaactor" % "1.0.2"` line -
  Vaadin directory will deliver the library compiled with scala binary version 2.12 !
 
 ### Development
@@ -119,7 +119,7 @@ class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
 
   override def init(request: VaadinRequest): Unit = { setContent(layout) }
 
-  override def receive: Actor.Receive = {
+  override def receive: Receive = {
     case hello: String =>
       globalCnt += 1
       stateDisplay.setValue(s"$hello (globalCnt:$globalCnt)")
@@ -157,10 +157,10 @@ Vaactor applications are deployed as servlets.
 During development you could use [xsb-web-plugin](http://earldouglas.com/projects/xsbt-web-plugin/).
 
 ```sbt
-addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.0.0")
+addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.0.2")
 ```
 
-The actual default version of jetty in the plugin has problems with Vaadin 8.1 and websockets,
+The actual default version of jetty in the plugin has problems with Vaadin 8.3 and websockets,
 so you should use the specific jetty version configured below.
 
 ```sbt
