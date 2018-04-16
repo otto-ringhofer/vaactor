@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val vaadinVersion = "8.3.1"
+  val vaadinVersion = "10.0.0.beta7"
   val servletapiVersion = "3.1.0"
   val slf4jVersion = "1.7.25"
   val akkaVersion = "2.5.11"
@@ -12,12 +12,9 @@ object Dependencies {
   val akkaOrg = "com.typesafe.akka"
   val slf4jOrg = "org.slf4j"
   val vaadinOrg = "com.vaadin"
+  val vaadinWebjarsOrg = "org.webjars.bowergithub.vaadin"
 
   val servletApi = "javax.servlet" % "javax.servlet-api" % servletapiVersion % "provided"
-  val vaadinServer = vaadinOrg % "vaadin-server" % vaadinVersion
-  val vaadinClientCompiled = vaadinOrg % "vaadin-client-compiled" % vaadinVersion
-  val vaadinThemes = vaadinOrg % "vaadin-themes" % vaadinVersion
-  val vaadinPush = vaadinOrg % "vaadin-push" % vaadinVersion
   val slf4j = slf4jOrg % "slf4j-api" % slf4jVersion % "provided"
   val slf4jSimple = slf4jOrg % "slf4j-simple" % slf4jVersion
   val akkaActor = akkaOrg %% "akka-actor" % akkaVersion
@@ -28,23 +25,27 @@ object Dependencies {
   val akkaTestkit = akkaOrg %% "akka-testkit" % akkaVersion % "test"
   val seleniumJava = "org.seleniumhq.selenium" % "selenium-java" % seleniumVersion % "test"
 
-  val addonDeps = Seq(
+  val vaadinFlowDeps = Seq(
+    vaadinOrg % "vaadin-bom" % vaadinVersion pomOnly(),
+    vaadinOrg % "vaadin-core" % vaadinVersion
+      exclude(vaadinWebjarsOrg, "vaadin-item"),
+    vaadinWebjarsOrg % "vaadin-item" % "2.0.0-beta3"
+  )
+
+
+  val addonDeps: Seq[ModuleID] = Seq(
     akkaActor,
     slf4j,
     akkaSlf4j,
-    vaadinServer,
-    vaadinPush,
     servletApi,
     scalactic,
     scalatest,
     akkaTestkit
-  )
+  ) ++ vaadinFlowDeps
 
   val vaadinServletDeps: Seq[ModuleID] = addonDeps ++ Seq(
     servletApi,
-    slf4jSimple,
-    vaadinClientCompiled,
-    vaadinThemes
+    slf4jSimple
   )
 
   val exampleDeps: Seq[ModuleID] = vaadinServletDeps

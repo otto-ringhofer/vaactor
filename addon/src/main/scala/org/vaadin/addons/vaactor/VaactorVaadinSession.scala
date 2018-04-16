@@ -1,6 +1,7 @@
 package org.vaadin.addons.vaactor
 
-import com.vaadin.server.VaadinSession
+
+import com.vaadin.flow.server.VaadinSession
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 

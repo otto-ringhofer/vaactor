@@ -3,7 +3,7 @@ package org.vaadin.addons.vaactor.demo
 import javax.servlet.annotation.WebServlet
 
 import org.vaadin.addons.vaactor.VaactorServlet
-import com.vaadin.annotations.VaadinServletConfiguration
+import com.vaadin.flow.server.VaadinServletConfiguration
 
 import akka.actor.Props
 
@@ -12,11 +12,11 @@ import akka.actor.Props
   * @author Otto Ringhofer
   */
 @WebServlet(
-  urlPatterns = Array("/session/*", "/VAADIN/*"),
+  urlPatterns = Array("/*"),
   asyncSupported = true)
 @VaadinServletConfiguration(
-  productionMode = false,
-  ui = classOf[SessionUI])
+  productionMode = false
+)
 class SessionServlet extends VaactorServlet {
 
   /** Define session actor to be created for every session */

@@ -4,7 +4,7 @@ import javax.servlet.ServletConfig
 
 import VaactorServlet._
 import VaactorVaadinSession._
-import com.vaadin.server.{ SessionDestroyEvent, SessionDestroyListener, SessionInitEvent, SessionInitListener, VaadinServlet }
+import com.vaadin.flow.server.{ SessionDestroyEvent, SessionDestroyListener, SessionInitEvent, SessionInitListener, VaadinServlet }
 
 import akka.actor.{ ActorSystem, Props }
 

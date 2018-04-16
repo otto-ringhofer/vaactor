@@ -3,8 +3,8 @@ package org.vaadin.addons.vaactor
 import VaactorUI._
 import org.vaadin.addons.vaactor.VaactorSession.{ Broadcast, Subscribe, Unsubscribe }
 import com.typesafe.config.Config
-import com.vaadin.server.VaadinSession
-import com.vaadin.ui.UI
+import com.vaadin.flow.component.{ AttachEvent, Component, Composite, DetachEvent, UI }
+import com.vaadin.flow.server.VaadinSession
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 
@@ -92,7 +92,7 @@ object VaactorUI {
   *
   * @author Otto Ringhofer
   */
-abstract class VaactorUI extends UI {
+abstract class VaactorUI extends Composite[Component] {
 
   /** Guardian actor, creates all vaactor-actors */
   val uiActor: ActorRef = VaactorUI.actorOf(Props(classOf[UiActor]))
@@ -100,9 +100,24 @@ abstract class VaactorUI extends UI {
   // will be initialized in init/attach, not possible before
   private var _sessionActor: ActorRef = _
 
+  // will be initialized in attach, not possible before
+  private var _vaadinUI: Option[UI] = None
+
   /** Session actor for this UI */
   // lazy because of late initialization in init/attach
   lazy val sessionActor: ActorRef = _sessionActor
+
+  /** Vaadin UI für dieses SVUI
+    *
+    * Darf erst nach dem Initialisieren des SVUI verwendet werden!!!
+    *
+    * UI Klassen sollten daher die eigene Referenz erst in der eigenen init() Methode weitergeben.
+    * Das wird u.a. dadurch erreicht, dass weitere Komponenten,
+    * an deren Konstruktor die eigene Referenz weitergegeben wird,
+    * erst in der init() Methode erzeugt werden.
+    */
+  // lazy because of late initialization in attach
+  lazy val vaadinUI: UI = _vaadinUI.get
 
   /** Send a message to the session actor.
     *
@@ -114,14 +129,15 @@ abstract class VaactorUI extends UI {
   def send2SessionActor(msg: Any, sender: ActorRef = Actor.noSender): Unit =
     sessionActor.tell(msg, sender)
 
-  override def attach(): Unit = {
-    super.attach()
+  override def onAttach(attachEvent: AttachEvent): Unit = {
+    super.onAttach(attachEvent)
     _sessionActor = VaactorVaadinSession.lookupSessionActor(VaadinSession.getCurrent)
+    _vaadinUI = Some(UI.getCurrent)
   }
 
-  override def detach(): Unit = {
+  override def onDetach(detachEvent: DetachEvent): Unit = {
     uiActor ! PoisonPill // stops also all vaactor children of this guardian
-    super.detach()
+    super.onDetach(detachEvent)
   }
 
   import akka.pattern.ask

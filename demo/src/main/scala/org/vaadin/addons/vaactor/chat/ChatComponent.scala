@@ -2,13 +2,16 @@ package org.vaadin.addons.vaactor.chat
 
 import org.vaadin.addons.vaactor._
 import org.vaadin.addons.vaactor.demo.Session
-import com.vaadin.annotations.Push
-import com.vaadin.data.provider.{ DataProvider, ListDataProvider }
-import com.vaadin.server.Sizeable
-import com.vaadin.shared.communication.PushMode
-import com.vaadin.shared.ui.ui.Transport
-import com.vaadin.ui._
-import com.vaadin.ui.themes.ValoTheme
+import com.vaadin.flow.component.button.Button
+import com.vaadin.flow.component.grid.Grid
+import com.vaadin.flow.component.html.Label
+import com.vaadin.flow.component.listbox.ListBox
+import com.vaadin.flow.component.notification.Notification
+import com.vaadin.flow.component.notification.Notification.Position
+import com.vaadin.flow.component.orderedlayout.{ HorizontalLayout, VerticalLayout }
+import com.vaadin.flow.component.textfield.TextField
+import com.vaadin.flow.component.{ Component, Composite }
+import com.vaadin.flow.data.provider.{ DataProvider, ListDataProvider }
 
 import akka.actor.Actor.Receive
 import akka.actor.ActorRef
@@ -31,12 +34,8 @@ object ChatComponent {
   *
   * @author Otto Ringhofer
   */
-@Push(
-  value = PushMode.AUTOMATIC,
-  transport = Transport.WEBSOCKET
-)
 class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: ChatComponent.Strategy)
-  extends CustomComponent with Vaactor.AttachSession {
+  extends Composite[Component] with Vaactor.AttachSession {
 
   /** Send to session actor on attach */
   override val attachMessage: Any = Session.Attached
@@ -47,17 +46,21 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
   /** Contains list of messages from chatroom */
   val chatList = new java.util.ArrayList[ChatServer.Statement]()
   val chatDataProvider: ListDataProvider[ChatServer.Statement] = DataProvider.ofCollection[ChatServer.Statement](chatList)
-  val chatPanel: Grid[ChatServer.Statement] = new Grid[ChatServer.Statement]("Chat", chatDataProvider) {
+  val chatPanel: Grid[ChatServer.Statement] = new Grid[ChatServer.Statement]() {
+    // todo setCaption("Chat")
     addColumn(d => d.name)
     addColumn(d => d.msg)
-    setWidth(400, Sizeable.Unit.PIXELS)
+    setWidth("400px")
+    setDataProvider(chatDataProvider)
   }
 
   /** Contains list of chatroom menbers */
   val memberList = new java.util.ArrayList[String]()
   val memberDataProvider: ListDataProvider[String] = DataProvider.ofCollection[String](memberList)
-  val memberPanel: ListSelect[String] = new ListSelect("Chatroom Members", memberDataProvider) {
-    setWidth(100, Sizeable.Unit.PIXELS)
+  val memberPanel: ListBox[String] = new ListBox[String] {
+    // todo    setWidth("100px")
+    // todo    setCaption("Chatroom Members")
+    setDataProvider(memberDataProvider)
   }
 
   /** Contains username */
@@ -65,7 +68,7 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
 
   val loginPanel: HorizontalLayout = new HorizontalLayout {
     setSpacing(true)
-    addComponents(
+    add(
       userName,
       new Button("Login", _ => strategy.login(userName.getValue, self))
     )
@@ -76,7 +79,7 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
   val messagePanel: HorizontalLayout = new HorizontalLayout {
     setSpacing(true)
     val text = new TextField()
-    addComponents(
+    add(
       text,
       new Button(
         "Send", _ => {
@@ -88,18 +91,18 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
   }
 
   /** Contains user interface for login/logout and sending of messages */
-  val userPanel = new Panel(
+  val userPanel = // todo new Panel()
     new VerticalLayout {
       setSpacing(true)
       setMargin(true)
-      addComponents(
+      add(
         new HorizontalLayout {
           setSpacing(true)
-          addComponents(loginPanel, logoutBtn)
+          add(loginPanel, logoutBtn)
         },
         new HorizontalLayout {
           setSpacing(true)
-          addComponents(
+          add(
             messagePanel,
             new Button(
               "Clear", _ => {
@@ -109,41 +112,40 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
             ))
         })
     }
-  )
 
-  setCompositionRoot(new VerticalLayout {
-    addComponents(
+  override def initContent(): Component = new VerticalLayout {
+    add(
       new Label {
-        setValue(title)
-        addStyleName(ValoTheme.LABEL_H1)
+        setText(title)
+        // todo        addStyleName(ValoTheme.LABEL_H1)
       },
       new HorizontalLayout {
         setSpacing(true)
-        addComponents(
+        add(
           new VerticalLayout {
             setSpacing(true)
-            addComponents(userPanel, chatPanel)
+            add(userPanel, chatPanel)
           },
           memberPanel)
       })
-  })
+  }
 
   self ! ChatServer.SubscriptionCancelled("")
 
   override def receive: Receive = {
     // User entered chatroom, update member list
     case ChatServer.Enter(name) =>
-      Notification.show(s"$name entered the chatroom")
+      Notification.show(s"$name entered the chatroom", 0, Position.MIDDLE)
       ChatServer.chatServer ! ChatServer.RequestMembers
     // User left chatroom, update member list
     case ChatServer.Leave(name) =>
-      Notification.show(s"$name left the chatroom")
+      Notification.show(s"$name left the chatroom", 0, Position.MIDDLE)
       ChatServer.chatServer ! ChatServer.RequestMembers
     // Message from chatroom, update message list
     case statement: ChatServer.Statement =>
       chatList.add(statement)
       chatDataProvider.refreshAll()
-      chatPanel.scrollToEnd()
+    // todo      chatPanel.scrollToEnd()
     // Member list of chatroom, update member list
     case ChatServer.Members(members) =>
       memberList.clear()
@@ -152,20 +154,20 @@ class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: 
     // Subscription successful, adjust user interface state
     case ChatServer.SubscriptionSuccess(name) =>
       ChatServer.chatServer ! ChatServer.RequestMembers
-      loginPanel.setEnabled(false)
+      // todo      loginPanel. setEnabled(false)
       logoutBtn.setEnabled(true)
-      messagePanel.setEnabled(true)
-      userPanel.setCaption(s"Logged in: $name")
+    // todo      messagePanel.setEnabled(true)
+    // todo      userPanel.setCaption(s"Logged in: $name")
     // Subscription cancelled, adjust user interface state
     case ChatServer.SubscriptionCancelled(_) =>
       self ! ChatServer.Members(Nil)
-      loginPanel.setEnabled(true)
+      // todo      loginPanel.setEnabled(true)
       logoutBtn.setEnabled(false)
-      messagePanel.setEnabled(false)
-      userPanel.setCaption("Please login ...")
+    // todo      messagePanel.setEnabled(false)
+    // todo      userPanel.setCaption("Please login ...")
     // Subscription failed, show warning
     case ChatServer.SubscriptionFailure(error) =>
-      Notification.show(error, Notification.Type.WARNING_MESSAGE)
+      Notification.show(error, 0, Position.MIDDLE)
   }
 
 }

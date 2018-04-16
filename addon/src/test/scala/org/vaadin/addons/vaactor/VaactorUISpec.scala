@@ -4,7 +4,8 @@ import VaactorUISpec._
 import org.vaadin.addons.vaactor.VaactorSession._
 import org.vaadin.addons.vaactor.VaactorSessionSpec.kill
 import org.vaadin.addons.vaactor.VaactorUI._
-import com.vaadin.server.VaadinRequest
+import com.vaadin.flow.component.Component
+import com.vaadin.flow.component.html.Label
 
 import akka.actor.{ ActorRef, Props }
 import akka.testkit.{ TestActorRef, TestActors, TestProbe }
@@ -15,7 +16,7 @@ object VaactorUISpec {
 
   class TestUI extends VaactorUI {
 
-    override def init(request: VaadinRequest): Unit = {}
+    override def initContent(): Component = new Label()
 
   }
 

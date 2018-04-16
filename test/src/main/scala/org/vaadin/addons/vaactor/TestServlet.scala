@@ -3,7 +3,7 @@ package org.vaadin.addons.vaactor
 import javax.servlet.annotation.WebServlet
 
 import Forwarder._
-import com.vaadin.annotations.VaadinServletConfiguration
+import com.vaadin.flow.server.VaadinServletConfiguration
 
 import akka.actor.{ Actor, ActorRef, Props }
 
@@ -42,8 +42,7 @@ object TestServlet {
   asyncSupported = true
 )
 @VaadinServletConfiguration(
-  productionMode = false,
-  ui = classOf[TestUI]
+  productionMode = false
 )
 class TestServlet extends VaactorServlet {
 

@@ -4,12 +4,17 @@ import javax.servlet.annotation.WebServlet
 
 import ExampleObject.globalCnt
 import org.vaadin.addons.vaactor._
-import com.vaadin.annotations.{ Push, VaadinServletConfiguration }
-import com.vaadin.server.VaadinRequest
-import com.vaadin.shared.communication.PushMode
-import com.vaadin.shared.ui.ui.Transport
-import com.vaadin.ui._
-import com.vaadin.ui.themes.ValoTheme
+import com.vaadin.flow.component.Component
+import com.vaadin.flow.component.button.Button
+import com.vaadin.flow.component.html.Label
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.component.page.{ BodySize, Push }
+import com.vaadin.flow.router.Route
+import com.vaadin.flow.server.VaadinServletConfiguration
+import com.vaadin.flow.shared.communication.PushMode
+import com.vaadin.flow.shared.ui.Transport
+import com.vaadin.flow.theme.Theme
+import com.vaadin.flow.theme.lumo.Lumo
 
 import akka.actor.Actor.Receive
 import akka.actor.{ Actor, Props }
@@ -33,8 +38,7 @@ object ExampleObject {
   asyncSupported = true
 )
 @VaadinServletConfiguration(
-  productionMode = false,
-  ui = classOf[ExampleUI]
+  productionMode = false
 )
 class ExampleServlet extends VaactorServlet {
 
@@ -42,6 +46,9 @@ class ExampleServlet extends VaactorServlet {
 
 }
 
+@BodySize(height = "100vh", width = "100vw")
+@Route("")
+@Theme(classOf[Lumo])
 @Push(
   value = PushMode.AUTOMATIC,
   transport = Transport.WEBSOCKET
@@ -56,24 +63,24 @@ class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
   val layout: VerticalLayout = new VerticalLayout {
     setMargin(true)
     setSpacing(true)
-    addComponent(new Label("Vaactor Example") {
-      addStyleName(ValoTheme.LABEL_H1)
+    add(new Label("Vaactor Example") {
+      // todo      addStyleName(ValoTheme.LABEL_H1)
     })
-    addComponent(new Button("Click Me", { _ =>
+    add(new Button("Click Me", { _ =>
       uiCnt += 1
       send2SessionActor(s"Thanks for clicking! (uiCnt:$uiCnt)")
     })
     )
-    addComponent(stateDisplay)
-    addComponent(new ExampleStateButton(ui))
+    add(stateDisplay)
+    add(new ExampleStateButton(ui))
   }
 
-  override def init(request: VaadinRequest): Unit = { setContent(layout) }
+  override def initContent(): Component = layout
 
   override def receive: Receive = {
     case hello: String =>
       globalCnt += 1
-      stateDisplay.setValue(s"$hello (globalCnt:$globalCnt)")
+      stateDisplay.setText(s"$hello (globalCnt:$globalCnt)")
   }
 
 }
@@ -92,11 +99,11 @@ class ExampleSessionActor extends Actor with VaactorSession[Int] {
 
 class ExampleStateButton(val vaactorUI: VaactorUI) extends Button with Vaactor {
 
-  setCaption("SessionState")
+  setText("SessionState")
   addClickListener { _ => vaactorUI.sessionActor ! VaactorSession.RequestSessionState }
 
   override def receive: Receive = {
-    case state: Int => setCaption(s"SessionState is $state")
+    case state: Int => setText(s"SessionState is $state")
   }
 
 }

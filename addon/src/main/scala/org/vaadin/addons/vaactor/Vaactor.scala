@@ -1,7 +1,7 @@
 package org.vaadin.addons.vaactor
 
 import Vaactor._
-import com.vaadin.ui.Component
+import com.vaadin.flow.component.{ AttachEvent, Component, DetachEvent }
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 
@@ -32,11 +32,11 @@ object Vaactor {
     *
     * Extends [[Vaactor]] with termination of actor in `detach` method of component.
     */
-  trait VaactorComponent extends Vaactor with Component {
+  trait VaactorComponent extends Component with Vaactor {
 
-    abstract override def detach(): Unit = {
+    abstract override def onDetach(detachEvent: DetachEvent): Unit = {
       self ! PoisonPill
-      super.detach()
+      super.onDetach(detachEvent)
     }
 
   }
@@ -61,14 +61,14 @@ object Vaactor {
     /** Message sent to session actor on detach of component */
     val detachMessage: Any
 
-    abstract override def attach(): Unit = {
-      super.attach()
+    abstract override def onAttach(attachEvent: AttachEvent): Unit = {
+      super.onAttach(attachEvent)
       send2SessionActor(attachMessage)
     }
 
-    abstract override def detach(): Unit = {
+    abstract override def onDetach(detachEvent: DetachEvent): Unit = {
       send2SessionActor(detachMessage)
-      super.detach()
+      super.onDetach(detachEvent)
     }
 
   }
@@ -112,17 +112,26 @@ trait Vaactor {
     */
   def sender: ActorRef = _sender
 
+  /** Handles all messages not handled by [[receive]].
+    *
+    * Overriding is encouraged.
+    * Default implementation forwards message to deadLetters actor of actor system.
+    *
+    * @param msg    message
+    * @param sender sender of message
+    */
+  def orElse(msg: Any, sender: ActorRef): Unit =
+    VaactorServlet.system.deadLetters.tell(msg, sender) // forward not possible, no ActorContext available
+
   /** Call [[receive]] of this trait synchronized by VaactorUI.access.
     * Is used by [[Vaactor.VaactorProxyActor]] to forward received messages to this trait.
-    *
-    * Discards all messages not proccessed by [[Vaactor.receive]]
     *
     * @param msg    message
     * @param sender sender of message
     */
   def receiveMessage(msg: Any, sender: ActorRef): Unit = {
     _sender = sender
-    vaactorUI.access(() => receive.applyOrElse(msg, (a: Any) => VaactorServlet.system.deadLetters ! a))
+    vaactorUI.vaadinUI.access(() => receive.applyOrElse(msg, (mp: Any) => orElse(mp, sender)))
     _sender = Actor.noSender
   }
 
