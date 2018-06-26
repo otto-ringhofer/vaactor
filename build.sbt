@@ -1,8 +1,5 @@
 name := BuildConfig.name
 
-resolvers += "Vaadin prereleases" at "https://maven.vaadin.com/vaadin-prereleases"
-resolvers += "Vaadin Directory" at "http://maven.vaadin.com/vaadin-addons"
-
 lazy val root = project.in(file("."))
   .settings(inThisBuild(Seq(
     organization := BuildConfig.organization,
