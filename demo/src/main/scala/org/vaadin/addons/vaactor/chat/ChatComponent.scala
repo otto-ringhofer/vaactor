@@ -34,8 +34,8 @@ object ChatComponent {
   *
   * @author Otto Ringhofer
   */
-class ChatComponent(override val vaactorUI: VaactorUI, title: String, strategy: ChatComponent.Strategy)
-  extends Composite[Component] with Vaactor.AttachSession {
+class ChatComponent(title: String, strategy: ChatComponent.Strategy)
+  extends Composite[Component] with Vaactor.HasActor with Vaactor.HasSession with Vaactor.AttachSession {
 
   /** Send to session actor on attach */
   override val attachMessage: Any = Session.Attached

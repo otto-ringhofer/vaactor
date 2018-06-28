@@ -1,8 +1,7 @@
 package org.vaadin.addons.vaactor.direct
 
-import org.vaadin.addons.vaactor.VaactorUI
 import org.vaadin.addons.vaactor.chat.{ ChatComponent, ChatServer }
-import com.vaadin.flow.component.Component
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.page.{ BodySize, Push }
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.shared.communication.PushMode
@@ -40,9 +39,8 @@ object DirectUI {
   value = PushMode.AUTOMATIC,
   transport = Transport.WEBSOCKET
 )
-class DirectUI extends VaactorUI {
+class DirectUI extends VerticalLayout {
 
-  override def initContent(): Component =
-    new ChatComponent(this, "Vaactor chat direct (without session)", DirectUI.strategy)
+  add(new ChatComponent("Vaactor chat direct (without session)", DirectUI.strategy))
 
 }

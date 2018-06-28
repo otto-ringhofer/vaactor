@@ -4,7 +4,6 @@ import javax.servlet.annotation.WebServlet
 
 import ExampleObject.globalCnt
 import org.vaadin.addons.vaactor._
-import com.vaadin.flow.component.Component
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.html.Label
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
@@ -53,29 +52,25 @@ class ExampleServlet extends VaactorServlet {
   value = PushMode.AUTOMATIC,
   transport = Transport.WEBSOCKET
 )
-class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
-  ui =>
+class ExampleUI extends VerticalLayout with Vaactor.HasActor with Vaactor.HasSession {
 
   // counter local to this UI
   var uiCnt = 0
 
   val stateDisplay = new Label()
-  val layout: VerticalLayout = new VerticalLayout {
-    setMargin(true)
-    setSpacing(true)
-    add(new Label("Vaactor Example") {
-      // todo      addStyleName(ValoTheme.LABEL_H1)
-    })
-    add(new Button("Click Me", { _ =>
-      uiCnt += 1
-      send2SessionActor(s"Thanks for clicking! (uiCnt:$uiCnt)")
-    })
-    )
-    add(stateDisplay)
-    add(new ExampleStateButton(ui))
-  }
 
-  override def initContent(): Component = layout
+  setMargin(true)
+  setSpacing(true)
+  add(new Label("Vaactor Example") {
+    // todo      addStyleName(ValoTheme.LABEL_H1)
+  })
+  add(new Button("Click Me", { _ =>
+    uiCnt += 1
+    session ! s"Thanks for clicking! (uiCnt:$uiCnt)"
+  })
+  )
+  add(stateDisplay)
+  add(new ExampleStateButton(this))
 
   override def receive: Receive = {
     case hello: String =>
@@ -97,10 +92,11 @@ class ExampleSessionActor extends Actor with VaactorSession[Int] {
 
 }
 
-class ExampleStateButton(val vaactorUI: VaactorUI) extends Button with Vaactor {
+class ExampleStateButton(val hasSession: Vaactor.HasSession)
+  extends Button with Vaactor.HasActor {
 
   setText("SessionState")
-  addClickListener { _ => vaactorUI.sessionActor ! VaactorSession.RequestSessionState }
+  addClickListener { _ => hasSession.session ! VaactorSession.RequestSessionState }
 
   override def receive: Receive = {
     case state: Int => setText(s"SessionState is $state")

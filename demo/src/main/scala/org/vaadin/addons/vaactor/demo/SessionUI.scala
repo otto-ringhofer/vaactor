@@ -2,7 +2,7 @@ package org.vaadin.addons.vaactor.demo
 
 import org.vaadin.addons.vaactor._
 import org.vaadin.addons.vaactor.chat.ChatComponent
-import com.vaadin.flow.component.Component
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.page.{ BodySize, Push }
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.shared.communication.PushMode
@@ -14,16 +14,16 @@ import akka.actor.ActorRef
 
 object SessionUI {
 
-  class Strategy(session: ActorRef) extends ChatComponent.Strategy {
+  class Strategy(hasSession: Vaactor.HasSession) extends ChatComponent.Strategy {
 
     override def login(name: String, sender: ActorRef): Unit =
-      session.tell(Session.Login(name), sender)
+      hasSession.session.tell(Session.Login(name), sender)
 
     override def logout(name: String, sender: ActorRef): Unit =
-      session.tell(Session.Logout, sender)
+      hasSession.session.tell(Session.Logout, sender)
 
     override def send(name: String, text: String, sender: ActorRef): Unit =
-      session.tell(Session.Message(text), sender)
+      hasSession.session.tell(Session.Message(text), sender)
 
   }
 
@@ -40,11 +40,9 @@ object SessionUI {
   value = PushMode.AUTOMATIC,
   transport = Transport.WEBSOCKET
 )
-class SessionUI extends VaactorUI {
+class SessionUI extends VerticalLayout with Vaactor.HasSession {
 
-  override def initContent(): Component = {
-    val strategy = new demo.SessionUI.Strategy(sessionActor)
-    new ChatComponent(this, "Vaactor chat with session support", strategy)
-  }
+  val strategy = new demo.SessionUI.Strategy(this)
+  add(new ChatComponent("Vaactor chat with session support", strategy))
 
 }

@@ -9,6 +9,8 @@ import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.shared.communication.PushMode
 import com.vaadin.flow.shared.ui.Transport
 
+import akka.actor.Actor.Receive
+
 object TestUI {
   val TextName = "text"
   val ButtonName = "button"
@@ -23,8 +25,7 @@ object TestUI {
   value = PushMode.AUTOMATIC,
   transport = Transport.WEBSOCKET
 )
-class TestUI extends VaactorUI {
-  testUI =>
+class TestUI extends VerticalLayout with Vaactor.HasActor with Vaactor.HasSession {
 
   import TestUI._
 
@@ -32,54 +33,55 @@ class TestUI extends VaactorUI {
   val sn = "vaactor.system-name"
 
 
-  override def initContent(): Component = {
-    forwarder.tell(Register(UIActorName), uiActor)
+  forwarder.tell(Register(UIActorName), self)
 
-    val layout = new VerticalLayout()
-    var addedComponent: Component = null
-    var addedSubscriber: Component = null
+  val layout = new VerticalLayout()
+  var addedComponent: Component = null
+  var addedSubscriber: Component = null
 
-    val txt = new TextField {
-      setWidth("100%")
-      setId(TextName)
-      setValue(s"$ap ${ loadedConfig.getString(ap) } $sn ${ loadedConfig.getString(sn) }")
+  val txt = new TextField {
+    setWidth("100%")
+    setId(TextName)
+    setValue(s"$ap ${ loadedConfig.getString(ap) } $sn ${ loadedConfig.getString(sn) }")
+  }
+
+  val btn = new Button("Send to session") {
+    setId(ButtonName)
+    addClickListener { _ => session ! TestServlet.SessionState(txt.getValue) }
+  }
+
+  val addBtn = new Button("Add component") {
+    setId(AddComponentButtonName)
+    addClickListener { _ =>
+      addedComponent = new TestComponent(NameSuffix)
+      layout.add(addedComponent)
     }
+  }
 
-    val btn = new Button("Send to session") {
-      setId(ButtonName)
-      addClickListener { _ => send2SessionActor(TestServlet.SessionState(txt.getValue)) }
+  val remBtn = new Button("Remove component") {
+    setId(RemoveComponentButtonName)
+    addClickListener { _ => layout.remove(addedComponent) }
+  }
+
+  val addSubsBtn = new Button("Add subscriber") {
+    setId(AddSubscriberButtonName)
+    addClickListener { _ =>
+      addedSubscriber = new TestSubscriber()
+      layout.add(addedSubscriber)
     }
+  }
 
-    val addBtn = new Button("Add component") {
-      setId(AddComponentButtonName)
-      addClickListener { _ =>
-        addedComponent = new TestComponent(testUI, NameSuffix)
-        layout.add(addedComponent)
-      }
-    }
+  val remSubsBtn = new Button("Remove subscriber") {
+    setId(RemoveSubscriberButtonName)
+    addClickListener { _ => layout.remove(addedSubscriber) }
+  }
 
-    val remBtn = new Button("Remove component") {
-      setId(RemoveComponentButtonName)
-      addClickListener { _ => layout.remove(addedComponent) }
-    }
+  val cmp = new TestComponent("")
 
-    val addSubsBtn = new Button("Add subscriber") {
-      setId(AddSubscriberButtonName)
-      addClickListener { _ =>
-        addedSubscriber = new TestSubscriber(testUI)
-        layout.add(addedSubscriber)
-      }
-    }
+  layout.add(txt, btn, cmp, addBtn, remBtn, addSubsBtn, remSubsBtn)
 
-    val remSubsBtn = new Button("Remove subscriber") {
-      setId(RemoveSubscriberButtonName)
-      addClickListener { _ => layout.remove(addedSubscriber) }
-    }
-
-    val cmp = new TestComponent(testUI, "")
-
-    layout.add(txt, btn, cmp, addBtn, remBtn, addSubsBtn, remSubsBtn)
-    layout
+  override def receive: Receive = {
+    case _ =>
   }
 
 }

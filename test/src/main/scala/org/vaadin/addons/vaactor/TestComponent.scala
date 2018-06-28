@@ -23,8 +23,8 @@ object TestComponent {
 
 }
 
-class TestComponent(val vaactorUI: VaactorUI, nameSuffix: String)
-  extends VerticalLayout with Vaactor.VaactorComponent {
+class TestComponent(nameSuffix: String)
+  extends VerticalLayout with Vaactor.HasActor {
 
   val txt = new TextField()
   txt.setWidth("100%")
@@ -32,7 +32,7 @@ class TestComponent(val vaactorUI: VaactorUI, nameSuffix: String)
 
   val btn = new Button("Send to Session" + nameSuffix)
   btn.setId(CompButtonName + nameSuffix)
-  btn.addClickListener { _ => send2SessionActor(TestServlet.SessionState(txt.getValue)) }
+  // todo  btn.addClickListener { _ => send2SessionActor(TestServlet.SessionState(txt.getValue)) }
 
   // todo  setCaption("TestComponent" + nameSuffix)
   add(txt, btn)
