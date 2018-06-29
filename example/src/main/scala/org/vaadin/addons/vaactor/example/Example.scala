@@ -39,9 +39,9 @@ object ExampleObject {
 @VaadinServletConfiguration(
   productionMode = false
 )
-class ExampleServlet extends VaactorServlet {
+class ExampleServlet extends VaactorSessionServlet {
 
-  override val sessionProps: Option[Props] = Some(Props(classOf[ExampleSessionActor]))
+  override val sessionProps: Props = Props(classOf[ExampleSessionActor])
 
 }
 

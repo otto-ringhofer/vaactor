@@ -8,9 +8,9 @@ import akka.actor.{ Actor, ActorRef, Props, Stash }
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-/** Vaadin session management with actors.
+/** Vaadin session management with Actors.
   *
-  * Creates session guardian actor as supervisor for all session actors.
+  * Creates session guardian Actor as supervisor for all session Actors.
   *
   * Defines messages used by trait [[VaactorSession]].
   *
@@ -20,7 +20,7 @@ object VaactorSession {
 
   protected case class InitialSessionState[S](session: S, subscribers: Set[ActorRef])
 
-  /** SessionGuardian, creates and supervises all session actors */
+  /** SessionGuardian, creates and supervises all session Actors */
   class SessionGuardian extends Actor {
 
     private var sessions: Int = 0
@@ -29,7 +29,7 @@ object VaactorSession {
       case props: Props =>
         sessions += 1
         val name = s"${ self.path.name }-${ props.actorClass.getSimpleName }-$sessions"
-        sender ! context.actorOf(props, name) // create new child actor
+        sender ! context.actorOf(props, name) // create new child Actor
     }
 
   }
@@ -49,26 +49,26 @@ object VaactorSession {
   /** Send current session state to all registered subscribers */
   case object BroadcastSessionState extends VaactorSessionMessage
 
-  /** Send message to all registered subscribers - processed by sessionActor and uiActor
+  /** Send message to all registered subscribers
     *
     * @param msg message to be sent
     * @tparam T type of message
     */
   case class Broadcast[T](msg: T) extends VaactorSessionMessage
 
-  /** Register sender as subscriber  - processed by sessionActor and uiActor */
+  /** Register sender as subscriber */
   case object Subscribe extends VaactorSessionMessage
 
-  /** Register actor as subscriber - processed by sessionActor and uiActor
+  /** Register Actor as subscriber
     *
-    * @param actor ActorRef of suscriber
+    * @param actor ActorRef of subcriber
     */
   case class Subscribe(actor: ActorRef) extends VaactorSessionMessage
 
-  /** Remove sender from list of subscribers  - processed by sessionActor and uiActor */
+  /** Remove sender from list of subscribers */
   case object Unsubscribe extends VaactorSessionMessage
 
-  /** Remove actor from list of subscribers - processed by sessionActor and uiActor
+  /** Remove Actor from list of subscribers
     *
     * @param actor ActorRef of subscriber to be removed
     */
@@ -90,7 +90,7 @@ object VaactorSession {
   case class BroadcastWithSession[T](msg: T) extends VaactorSessionMessage
 
   /** Wrap message and session state.
-    * Is sent by session actor on request.
+    * Is sent by session Actor on request.
     *
     * @param session current session state
     * @param msg     message
@@ -99,7 +99,7 @@ object VaactorSession {
     */
   case class WithSession[S, T](session: S, msg: T)
 
-  /** [[SessionGuardian]] actor, creates all session-actors */
+  /** [[SessionGuardian]] Actor, creates all session Actors */
   val guardian: ActorRef = VaactorServlet.system.actorOf(
     Props[SessionGuardian], sessionConfig.getString("guardian-name"))
 
@@ -108,17 +108,17 @@ object VaactorSession {
 
   private val askTimeout = Timeout(sessionConfig.getInt("ask-timeout").seconds)
 
-  /** Create an actor as child of [[guardian]]
+  /** Create an Actor as child of [[guardian]]
     *
     * @param props Props of acctor to be created
-    * @return ActorRef of created actor
+    * @return ActorRef of created Actor
     */
   def actorOf(props: Props): ActorRef =
     Await.result((guardian ? props) (askTimeout).mapTo[ActorRef], Duration.Inf)
 
 }
 
-/** Helper trait for session actors
+/** Helper trait for session Actors
   *
   * Handles session state variable.
   *
@@ -132,9 +132,9 @@ object VaactorSession {
 trait VaactorSession[S] extends Stash {
   this: Actor =>
 
-  /** Defines initial session state, ist set after creation of actor.
+  /** Defines initial session state, ist set after creation of Actor.
     *
-    * Is NOT set after restart of actor.
+    * Is NOT set after restart of Actor.
     */
   val initialSessionState: S
 

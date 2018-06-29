@@ -2,16 +2,10 @@ package org.vaadin.addons.vaactor
 
 import javax.servlet.ServletConfig
 
-import VaactorServlet._
-import VaactorVaadinSession._
-import com.vaadin.flow.server.{ SessionDestroyEvent, SessionDestroyListener, SessionInitEvent, SessionInitListener, VaadinServlet }
+import com.vaadin.flow.server.VaadinServlet
 
-import akka.actor.{ ActorSystem, Props }
+import akka.actor.ActorSystem
 
-/** Initializes and stores the actor system
-  *
-  * @author Otto Ringhofer
-  */
 object VaactorServlet {
 
   /** the actor system */
@@ -20,42 +14,26 @@ object VaactorServlet {
     config.withFallback(loadedConfig)
   )
 
+  private def dummyInit(): Unit = {}
+
 }
 
-/** Servlet creates and destroys session actors
+/** Servlet creates and destroys ActorSystem
   *
   * @author Otto Ringhofer
   */
-abstract class VaactorServlet extends VaadinServlet
-  with SessionInitListener with SessionDestroyListener {
-
-  /** Props for creating session actors for this service */
-  val sessionProps: Option[Props] = None
+abstract class VaactorServlet extends VaadinServlet {
 
   /** Log init */
   override def init(servletConfig: ServletConfig): Unit = {
     super.init(servletConfig)
+    VaactorServlet.dummyInit()
   }
 
-  /** Terminate actor system, log destroy */
+  /** Terminate actor system */
   override def destroy(): Unit = {
     super.destroy()
-    system.terminate()
+    VaactorServlet.system.terminate()
   }
-
-  /** Register init and destroy listeners */
-  override protected def servletInitialized(): Unit = {
-    super.servletInitialized()
-    getService.addSessionInitListener(VaactorServlet.this)
-    getService.addSessionDestroyListener(VaactorServlet.this)
-  }
-
-  /** Create session actor, store it in vaadin-session */
-  override def sessionInit(event: SessionInitEvent): Unit =
-    createAndStoreSessionActor(sessionProps, event.getSession)
-
-  /** Stop session actor */
-  override def sessionDestroy(event: SessionDestroyEvent): Unit =
-    lookupAndTerminateSessionActor(sessionProps, event.getSession)
 
 }

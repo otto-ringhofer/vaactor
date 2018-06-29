@@ -2,7 +2,7 @@ package org.vaadin.addons.vaactor.demo
 
 import javax.servlet.annotation.WebServlet
 
-import org.vaadin.addons.vaactor.VaactorServlet
+import org.vaadin.addons.vaactor.VaactorSessionServlet
 import com.vaadin.flow.server.VaadinServletConfiguration
 
 import akka.actor.Props
@@ -17,9 +17,9 @@ import akka.actor.Props
 @VaadinServletConfiguration(
   productionMode = false
 )
-class SessionServlet extends VaactorServlet {
+class SessionServlet extends VaactorSessionServlet {
 
   /** Define session actor to be created for every session */
-  override val sessionProps = Some(Props(classOf[Session.SessionActor]))
+  override val sessionProps = Props(classOf[Session.SessionActor])
 
 }

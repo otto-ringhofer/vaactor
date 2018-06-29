@@ -3,6 +3,7 @@ package org.vaadin.addons.vaactor
 import javax.servlet.annotation.WebServlet
 
 import Forwarder._
+import TestServlet._
 import com.vaadin.flow.server.VaadinServletConfiguration
 
 import akka.actor.{ Actor, ActorRef, Props }
@@ -33,7 +34,7 @@ object TestServlet {
   val forwarder: ActorRef = Forwarder.forwarder
 
   // Dummy function, references object without side effects
-  def touchTestServlet(): Unit = {}
+  private def dummyInit(): Unit = {}
 
 }
 
@@ -44,12 +45,10 @@ object TestServlet {
 @VaadinServletConfiguration(
   productionMode = false
 )
-class TestServlet extends VaactorServlet {
+class TestServlet extends VaactorSessionServlet {
 
-  import TestServlet._
+  override val sessionProps: Props = Props[SessionActor]
 
-  override val sessionProps = Some(Props[SessionActor])
-
-  touchTestServlet() // activate companion object and Forwarder referenced there
+  dummyInit() // activate companion object and Forwarder referenced there
 
 }
