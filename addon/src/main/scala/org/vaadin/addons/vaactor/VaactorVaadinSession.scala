@@ -1,9 +1,12 @@
 package org.vaadin.addons.vaactor
 
 
+import org.vaadin.addons.vaactor.Vaactor.SessionWithoutActorException
 import com.vaadin.flow.server.VaadinSession
 
 import akka.actor.{ ActorRef, PoisonPill, Props }
+
+import scala.util.{ Failure, Success, Try }
 
 /** Toolbox for managing session Actor within VaadinSession.
   *
@@ -13,7 +16,7 @@ import akka.actor.{ ActorRef, PoisonPill, Props }
   *
   * @author Otto Ringhofer
   */
-object VaactorVaadinSession {
+private[vaactor] object VaactorVaadinSession {
 
   /** Type to be stored in VaadinSession.
     *
@@ -40,16 +43,19 @@ object VaactorVaadinSession {
   /** Lookup session Actor in VaadinSession
     *
     * @param session VaadinSession
-    * @return `ActorRef` found in VaadinSession
+    * @return `Try[ActorRef]` found in VaadinSession
     */
-  def lookupSessionActor(session: VaadinSession): ActorRef =
-    session.getAttribute(classOf[SessionActor]).actor
+  def lookupSessionActor(session: VaadinSession): Try[ActorRef] =
+    Option(session.getAttribute(classOf[SessionActor])) match {
+      case Some(sessionActor) => Success(sessionActor.actor)
+      case None => Failure(SessionWithoutActorException)
+    }
 
   /** Lookup session Actor in VaadinSession and send a PoisonPill to it, if present.
     *
     * @param session VaadinSession
     */
   def lookupAndTerminateSessionActor(session: VaadinSession): Unit =
-    lookupSessionActor(session) ! PoisonPill
+    for (sessionActor <- lookupSessionActor(session)) sessionActor ! PoisonPill
 
 }

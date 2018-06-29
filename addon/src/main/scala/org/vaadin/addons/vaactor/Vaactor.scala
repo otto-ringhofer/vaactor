@@ -8,12 +8,19 @@ import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.util.{ Failure, Success, Try }
 
 /** Contains the Vaactor traits and the [[ProxyActor]] class.
   *
   * @author Otto Ringhofer
   */
 object Vaactor {
+
+  object UINotAttachedException extends Exception("HasActor.ui is accessed before the Component was attached")
+
+  object SessionWithoutActorException extends Exception("VaadinSession does not contain a valid SessionActor")
+
+  object SessionNotAttachedException extends Exception("HasSession.sessioon is accessed before the Component was attached")
 
   /** Guardian, creates and supervises all [[ProxyActor]] */
   class ProxyGuardian extends Actor {
@@ -79,16 +86,22 @@ object Vaactor {
   trait HasActor extends Component {
 
     private var _sender: ActorRef = Actor.noSender
-    private var _ui: UI = _
+    private var _ui: Try[UI] = Failure(UINotAttachedException)
 
-    lazy val ui: UI = _ui
-
-    abstract override def onAttach(attachEvent: AttachEvent): Unit = {
-      super.onAttach(attachEvent)
-      _ui = UI.getCurrent
+    lazy val ui: UI = _ui match {
+      case Success(uif) => uif
+      case Failure(ex) => throw ex
     }
 
-    abstract override def onDetach(detachEvent: DetachEvent): Unit = {
+    override def onAttach(attachEvent: AttachEvent): Unit = {
+      super.onAttach(attachEvent)
+      Option(UI.getCurrent) match {
+        case Some(uif) => _ui = Success(uif)
+        case None => Failure(UINotAttachedException)
+      }
+    }
+
+    override def onDetach(detachEvent: DetachEvent): Unit = {
       self ! PoisonPill
       super.onDetach(detachEvent)
     }
@@ -135,11 +148,14 @@ object Vaactor {
   /** Vaadin Component with session Actor. */
   trait HasSession extends Component {
 
-    private var _session: ActorRef = _
+    private var _session: Try[ActorRef] = Failure(SessionWithoutActorException)
 
-    lazy val session: ActorRef = _session
+    lazy val session: ActorRef = _session match {
+      case Success(sess) => sess
+      case Failure(ex) => throw ex
+    }
 
-    abstract override def onAttach(attachEvent: AttachEvent): Unit = {
+    override def onAttach(attachEvent: AttachEvent): Unit = {
       super.onAttach(attachEvent)
       _session = VaactorVaadinSession.lookupSessionActor(attachEvent.getSession)
     }
@@ -155,12 +171,12 @@ object Vaactor {
     /** Message sent to session Actor on detach of Component */
     val detachMessage: Any
 
-    abstract override def onAttach(attachEvent: AttachEvent): Unit = {
+    override def onAttach(attachEvent: AttachEvent): Unit = {
       super.onAttach(attachEvent)
       session ! attachMessage
     }
 
-    abstract override def onDetach(detachEvent: DetachEvent): Unit = {
+    override def onDetach(detachEvent: DetachEvent): Unit = {
       session ! detachMessage
       super.onDetach(detachEvent)
     }
