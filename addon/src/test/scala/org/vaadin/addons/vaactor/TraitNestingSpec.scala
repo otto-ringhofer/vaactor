@@ -1,11 +1,12 @@
 package org.vaadin.addons.vaactor
 
-import VaactorSpec._
+import TraitNestingSpec._
+import org.scalatest.FreeSpec
 
 import akka.actor.Actor.Receive
 import akka.actor.ActorRef
 
-object VaactorSpec {
+object TraitNestingSpec {
 
   case class VaactorTestMsg(msg: String, probe: ActorRef)
 
@@ -81,7 +82,7 @@ object VaactorSpec {
 
 }
 
-class VaactorSpec extends AkkaSpec {
+class TraitNestingSpec extends FreeSpec {
 
   "Test Trait Patterns" - {
     "A" in {
@@ -127,15 +128,6 @@ class VaactorSpec extends AkkaSpec {
     "SUA" in {
       println("SUA =============>")
       new SUA().onAttach()
-    }
-  }
-
-  "Vaactor should" - {
-    "create self actor" in {
-      // todo     val ui = new TestUI()
-      //      val va = new TestVaactor(ui)
-      //      va.self.path.name should startWith("ui-UiActor-")
-      //      va.self.path.name should include("-VaactorProxyActor-")
     }
   }
 
