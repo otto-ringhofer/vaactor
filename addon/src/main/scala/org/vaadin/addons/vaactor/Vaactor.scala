@@ -5,6 +5,7 @@ import com.typesafe.config.Config
 import com.vaadin.flow.component.{ AttachEvent, Component, DetachEvent, UI }
 
 import akka.actor.{ Actor, ActorRef, PoisonPill, Props }
+import akka.event.LoggingReceive
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -67,7 +68,7 @@ object Vaactor {
     */
   class ProxyActor(hasActor: HasActor) extends Actor {
 
-    def receive: Receive = {
+    def receive: Receive = LoggingReceive {
       // catch all messages and forward to UI
       case msg: Any => hasActor.receiveMessage(msg, sender)
     }

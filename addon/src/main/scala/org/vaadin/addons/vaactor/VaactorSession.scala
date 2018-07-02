@@ -4,6 +4,7 @@ import VaactorSession._
 import com.typesafe.config.Config
 
 import akka.actor.{ Actor, ActorRef, Props, Stash }
+import akka.event.LoggingReceive
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -174,7 +175,7 @@ trait VaactorSession[S] extends Stash {
   override def postRestart(reason: Throwable): Unit = {}
 
   /** Handle all messages marked by [[VaactorSession.VaactorSessionMessage]] */
-  val vaactorSessionBehaviour: Receive = {
+  val vaactorSessionBehaviour: Receive = LoggingReceive {
     case vaactorSessionMessage: VaactorSessionMessage => vaactorSessionMessage match {
       case RequestSessionState =>
         sender.forward(sessionState)
@@ -198,7 +199,7 @@ trait VaactorSession[S] extends Stash {
   }
 
   /** Initial behaviour, waits for [[VaactorSession.InitialSessionState]] message */
-  final val receive: Receive = {
+  final val receive: Receive = LoggingReceive {
     case InitialSessionState(state, subs) =>
       sessionState = state.asInstanceOf[S]
       subscribers = subs
