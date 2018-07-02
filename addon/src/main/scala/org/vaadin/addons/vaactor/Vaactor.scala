@@ -164,6 +164,7 @@ object Vaactor {
 
   /** Vaadin Component with session Actor and automatic attach/detach message to session Actor. */
   trait AttachSession extends HasSession {
+    this: HasActor => // needed, defines implicit self
 
     /** Message sent to session Actor on attach of Component */
     val attachMessage: Any
@@ -185,6 +186,7 @@ object Vaactor {
 
   /** Vaadin Component with session Actor and automatic subscription to session Actor. */
   trait SubscribeSession extends AttachSession {
+    this: HasActor => // needed, defines implicit self
 
     /** Subscribe message sent to session Actor on attach of Component */
     override val attachMessage: Any = VaactorSession.Subscribe
