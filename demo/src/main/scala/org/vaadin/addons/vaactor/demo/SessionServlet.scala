@@ -11,12 +11,8 @@ import akka.actor.Props
   *
   * @author Otto Ringhofer
   */
-@WebServlet(
-  urlPatterns = Array("/*"),
-  asyncSupported = true)
-@VaadinServletConfiguration(
-  productionMode = false
-)
+@WebServlet(urlPatterns = Array("/*"), asyncSupported = true)
+@VaadinServletConfiguration(productionMode = false)
 class SessionServlet extends VaactorSessionServlet {
 
   /** Define session actor to be created for every session */

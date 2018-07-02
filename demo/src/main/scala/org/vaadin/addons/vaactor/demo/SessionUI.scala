@@ -3,7 +3,7 @@ package org.vaadin.addons.vaactor.demo
 import org.vaadin.addons.vaactor._
 import org.vaadin.addons.vaactor.chat.ChatComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
-import com.vaadin.flow.component.page.{ BodySize, Push }
+import com.vaadin.flow.component.page.Push
 import com.vaadin.flow.router.Route
 import com.vaadin.flow.shared.communication.PushMode
 import com.vaadin.flow.shared.ui.Transport
@@ -33,16 +33,23 @@ object SessionUI {
   *
   * @author Otto Ringhofer
   */
-@BodySize(height = "100vh", width = "100vw")
 @Route("session")
-@Theme(classOf[Lumo])
-@Push(
-  value = PushMode.AUTOMATIC,
-  transport = Transport.WEBSOCKET
-)
+@Theme(value = classOf[Lumo], variant = Lumo.DARK)
+@Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
 class SessionUI extends VerticalLayout with Vaactor.HasSession {
 
-  val strategy = new demo.SessionUI.Strategy(this)
-  add(new ChatComponent("Vaactor chat with session support", strategy))
+  val strategy = new demo.SessionUI.Strategy(this) // "this" ssupports strategy with session actor
+  val chatComponent: ChatComponent = new ChatComponent("Vaactor chat with session support", strategy)
+    with Vaactor.AttachSession { // AttachSession
+
+    /** Send to session actor on attach */
+    override val attachMessage: Any = Session.Attached
+
+    /** Send to session actor on detach */
+    override val detachMessage: Any = Session.Detached
+
+  }
+
+  add(chatComponent)
 
 }
