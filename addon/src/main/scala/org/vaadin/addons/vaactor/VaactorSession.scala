@@ -175,7 +175,7 @@ trait VaactorSession[S] extends Stash {
   override def postRestart(reason: Throwable): Unit = {}
 
   /** Handle all messages marked by [[VaactorSession.VaactorSessionMessage]] */
-  val vaactorSessionBehaviour: Receive = LoggingReceive {
+  val vaactorSessionBehaviour: Receive = {
     case vaactorSessionMessage: VaactorSessionMessage => vaactorSessionMessage match {
       case RequestSessionState =>
         sender.forward(sessionState)
@@ -203,7 +203,7 @@ trait VaactorSession[S] extends Stash {
     case InitialSessionState(state, subs) =>
       sessionState = state.asInstanceOf[S]
       subscribers = subs
-      context.become(vaactorSessionBehaviour orElse sessionBehaviour)
+      context.become(LoggingReceive(vaactorSessionBehaviour orElse sessionBehaviour))
       unstashAll()
     case _ =>
       stash()

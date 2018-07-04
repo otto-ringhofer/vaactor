@@ -21,7 +21,7 @@ object Vaactor {
 
   object SessionWithoutActorException extends Exception("VaadinSession does not contain a valid SessionActor")
 
-  object SessionNotAttachedException extends Exception("HasSession.sessioon is accessed before the Component was attached")
+  object SessionNotAttachedException extends Exception("HasSession.session is accessed before the Component was attached")
 
   /** Guardian, creates and supervises all [[ProxyActor]] */
   class ProxyGuardian extends Actor {

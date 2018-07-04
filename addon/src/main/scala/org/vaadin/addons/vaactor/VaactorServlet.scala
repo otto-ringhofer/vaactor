@@ -24,10 +24,10 @@ object VaactorServlet {
   */
 abstract class VaactorServlet extends VaadinServlet {
 
-  /** Log init */
+  /** Initialize actor system */
   override def init(servletConfig: ServletConfig): Unit = {
     super.init(servletConfig)
-    VaactorServlet.dummyInit()
+    VaactorServlet.dummyInit() // trigger creation of system
   }
 
   /** Terminate actor system */
