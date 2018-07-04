@@ -1,11 +1,13 @@
 package org.vaadin.addons.vaactor.direct
 
-import org.vaadin.addons.vaactor.VaactorUI
 import org.vaadin.addons.vaactor.chat.{ ChatComponent, ChatServer }
-import com.vaadin.annotations.Push
-import com.vaadin.server.VaadinRequest
-import com.vaadin.shared.communication.PushMode
-import com.vaadin.shared.ui.ui.Transport
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.component.page.Push
+import com.vaadin.flow.router.Route
+import com.vaadin.flow.shared.communication.PushMode
+import com.vaadin.flow.shared.ui.Transport
+import com.vaadin.flow.theme.Theme
+import com.vaadin.flow.theme.lumo.Lumo
 
 import akka.actor.ActorRef
 
@@ -30,13 +32,11 @@ object DirectUI {
   *
   * @author Otto Ringhofer
   */
-@Push(
-  value = PushMode.AUTOMATIC,
-  transport = Transport.WEBSOCKET
-)
-class DirectUI extends VaactorUI {
+@Route("direct")
+@Theme(value = classOf[Lumo], variant = Lumo.DARK)
+@Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
+class DirectUI extends VerticalLayout {
 
-  override def init(request: VaadinRequest): Unit =
-    setContent(new ChatComponent(this, "Vaactor chat direct (without session)", DirectUI.strategy))
+  add(new ChatComponent("Vaactor chat direct (without session)", DirectUI.strategy))
 
 }

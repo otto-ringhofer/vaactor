@@ -2,7 +2,10 @@ package org.vaadin.addons.vaactor
 
 import Forwarder._
 import TestComponent._
-import com.vaadin.ui.{ Button, TextField, VerticalLayout }
+import com.vaadin.flow.component.AttachEvent
+import com.vaadin.flow.component.button.Button
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.component.textfield.TextField
 
 import akka.actor.Actor.Receive
 import akka.actor._
@@ -20,8 +23,8 @@ object TestComponent {
 
 }
 
-class TestComponent(val vaactorUI: VaactorUI, nameSuffix: String)
-  extends VerticalLayout with Vaactor.VaactorComponent {
+class TestComponent(nameSuffix: String)
+  extends VerticalLayout with Vaactor.HasActor {
 
   val txt = new TextField()
   txt.setWidth("100%")
@@ -29,13 +32,13 @@ class TestComponent(val vaactorUI: VaactorUI, nameSuffix: String)
 
   val btn = new Button("Send to Session" + nameSuffix)
   btn.setId(CompButtonName + nameSuffix)
-  btn.addClickListener { _ => send2SessionActor(TestServlet.SessionState(txt.getValue)) }
+  // todo  btn.addClickListener { _ => send2SessionActor(TestServlet.SessionState(txt.getValue)) }
 
-  setCaption("TestComponent" + nameSuffix)
-  addComponents(txt, btn)
+  // todo  setCaption("TestComponent" + nameSuffix)
+  add(txt, btn)
 
-  override def attach(): Unit = {
-    super.attach()
+  override def onAttach(attachEvent: AttachEvent): Unit = {
+    super.onAttach(attachEvent)
     forwarder.tell(Register(VaactorActorName + nameSuffix), self)
   }
 

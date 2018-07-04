@@ -2,25 +2,28 @@ package org.vaadin.addons.vaactor.demo
 
 import org.vaadin.addons.vaactor._
 import org.vaadin.addons.vaactor.chat.ChatComponent
-import com.vaadin.annotations.Push
-import com.vaadin.server.VaadinRequest
-import com.vaadin.shared.communication.PushMode
-import com.vaadin.shared.ui.ui.Transport
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.component.page.Push
+import com.vaadin.flow.router.Route
+import com.vaadin.flow.shared.communication.PushMode
+import com.vaadin.flow.shared.ui.Transport
+import com.vaadin.flow.theme.Theme
+import com.vaadin.flow.theme.lumo.Lumo
 
 import akka.actor.ActorRef
 
 object SessionUI {
 
-  class Strategy(session: ActorRef) extends ChatComponent.Strategy {
+  class Strategy(hasSession: Vaactor.HasSession) extends ChatComponent.Strategy {
 
     override def login(name: String, sender: ActorRef): Unit =
-      session.tell(Session.Login(name), sender)
+      hasSession.session.tell(Session.Login(name), sender)
 
     override def logout(name: String, sender: ActorRef): Unit =
-      session.tell(Session.Logout, sender)
+      hasSession.session.tell(Session.Logout, sender)
 
     override def send(name: String, text: String, sender: ActorRef): Unit =
-      session.tell(Session.Message(text), sender)
+      hasSession.session.tell(Session.Message(text), sender)
 
   }
 
@@ -30,16 +33,23 @@ object SessionUI {
   *
   * @author Otto Ringhofer
   */
-@Push(
-  value = PushMode.AUTOMATIC,
-  transport = Transport.WEBSOCKET
-)
-class SessionUI extends VaactorUI {
+@Route("session")
+@Theme(value = classOf[Lumo], variant = Lumo.DARK)
+@Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
+class SessionUI extends VerticalLayout with Vaactor.HasSession {
 
-  override def init(request: VaadinRequest): Unit = {
-    val strategy = new demo.SessionUI.Strategy(sessionActor)
-    val chatComponent = new ChatComponent(this, "Vaactor chat with session support", strategy)
-    setContent(chatComponent)
+  val strategy = new demo.SessionUI.Strategy(this) // "this" ssupports strategy with session actor
+  val chatComponent: ChatComponent = new ChatComponent("Vaactor chat with session support", strategy)
+    with Vaactor.AttachSession { // AttachSession
+
+    /** Send to session actor on attach */
+    override val attachMessage: Any = Session.Attached
+
+    /** Send to session actor on detach */
+    override val detachMessage: Any = Session.Detached
+
   }
+
+  add(chatComponent)
 
 }

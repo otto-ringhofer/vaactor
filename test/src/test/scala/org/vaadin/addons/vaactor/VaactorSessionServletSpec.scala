@@ -4,7 +4,7 @@ import Forwarder._
 
 import akka.actor.{ ActorIdentity, ActorRef, Identify }
 
-class VaactorServletSpec extends WebBrowserSpec {
+class VaactorSessionServletSpec extends WebBrowserSpec {
 
   var forwarder: ActorRef = _
 

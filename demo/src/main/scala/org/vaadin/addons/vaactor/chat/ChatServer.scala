@@ -3,6 +3,7 @@ package org.vaadin.addons.vaactor.chat
 import org.vaadin.addons.vaactor.VaactorServlet
 
 import akka.actor.{ Actor, ActorRef, Props }
+import akka.event.LoggingReceive
 
 /** Contains ChatServer actor and messages
   *
@@ -85,7 +86,7 @@ object ChatServer {
     private var chatRoom = Map.empty[String, Client]
 
     /** Process received messages */
-    def receive: Receive = {
+    def receive: Receive = LoggingReceive {
       // Subscribe from client
       case Subscribe(client) =>
         // no name, reply with failure
