@@ -1,10 +1,13 @@
 package org.vaadin.addons.vaactor
 
 import VaactorSessionSpec._
+import org.scalatest.{ FreeSpecLike, Matchers }
 import org.vaadin.addons.vaactor.VaactorSession._
 
 import akka.actor._
 import akka.testkit._
+
+import scala.concurrent.duration.{ FiniteDuration, _ }
 
 object VaactorSessionSpec {
 
@@ -28,7 +31,10 @@ object VaactorSessionSpec {
 
 }
 
-class VaactorSessionSpec extends AkkaSpec {
+class VaactorSessionSpec extends TestKit(VaactorServlet.system)
+  with FreeSpecLike with Matchers with ImplicitSender {
+
+  implicit val waittime: FiniteDuration = 500.millis
 
   "object VaactorSession" - {
     "guardian" - {

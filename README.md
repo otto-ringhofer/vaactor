@@ -1,6 +1,6 @@
 # Vaactor
 
-Use [Vaadin Framework](https://vaadin.com/framework) 
+Use [Vaadin Flow](https://vaadin.com/flow) 
 with [Scala](http://www.scala-lang.org/)
 and [Akka](http://akka.io/) [actors](http://doc.akka.io/docs/akka/current/scala/actors.html).
 
@@ -32,24 +32,21 @@ resolvers ++= Seq(
   "vaadin-addons" at "http://maven.vaadin.com/vaadin-addons"
 )
 
-val vaadinVersion = "8.3.1"
-val akkaVersion = "2.5.11"
+val vaadinVersion = "10.0.1"
+val akkaVersion = "2.5.13"
 libraryDependencies ++= Seq(
-  "org.vaadin.addons" % "vaactor" % "1.0.2",
+  "org.vaadin.addons" % "vaactor" % "2.0.0",
   "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
-  "com.vaadin" % "vaadin-server" % vaadinVersion,
-  "com.vaadin" % "vaadin-client-compiled" % vaadinVersion,
-  "com.vaadin" % "vaadin-themes" % vaadinVersion,
-  "com.vaadin" % "vaadin-push" % vaadinVersion,
+  "com.vaadin" % "vaadin-core" % vaadinVersion,
   "com.typesafe.akka" %% "akka-actor" % akkaVersion
 )
 ```
-Note the `"org.vaadin.addons" % "vaactor" % "1.0.2"` line -
+Note the `"org.vaadin.addons" % "vaactor" % "2.0.0"` line -
  Vaadin directory will deliver the library compiled with scala binary version 2.12 !
 
 ### Development
 
-Implement a Servlet, an UI, a session Actor and Compnents in your Scala code,
+Implement a Servlet, an UI Component and a session Actor in your Scala code,
  and extend them with traits from the vaactor library:
 
 ```scala
@@ -57,15 +54,20 @@ import javax.servlet.annotation.WebServlet
 
 import ExampleObject.globalCnt
 import org.vaadin.addons.vaactor._
-import com.vaadin.annotations.{ Push, VaadinServletConfiguration }
-import com.vaadin.server.VaadinRequest
-import com.vaadin.shared.communication.PushMode
-import com.vaadin.shared.ui.ui.Transport
-import com.vaadin.ui._
-import com.vaadin.ui.themes.ValoTheme
+import com.vaadin.flow.component.button.Button
+import com.vaadin.flow.component.html.Label
+import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.component.page.Push
+import com.vaadin.flow.router.Route
+import com.vaadin.flow.server.VaadinServletConfiguration
+import com.vaadin.flow.shared.communication.PushMode
+import com.vaadin.flow.shared.ui.Transport
+import com.vaadin.flow.theme.Theme
+import com.vaadin.flow.theme.lumo.Lumo
 
 import akka.actor.Actor.Receive
 import akka.actor.{ Actor, Props }
+
 
 object ExampleObject {
   // global counter
@@ -77,52 +79,48 @@ object ExampleObject {
 
 }
 
-@WebServlet(
-  urlPatterns = Array("/*"),
-  asyncSupported = true
-)
-@VaadinServletConfiguration(
-  productionMode = false,
-  ui = classOf[ExampleUI]
-)
-class ExampleServlet extends VaactorServlet {
+@WebServlet(urlPatterns = Array("/*"), asyncSupported = true)
+@VaadinServletConfiguration(productionMode = false)
+class ExampleServlet extends VaactorSessionServlet {
 
-  override val sessionProps: Option[Props] = Some(Props(classOf[ExampleSessionActor]))
+  override val sessionProps: Props = Props(classOf[ExampleSessionActor])
 
 }
 
-@Push(
-  value = PushMode.AUTOMATIC,
-  transport = Transport.WEBSOCKET
-)
-class ExampleUI extends VaactorUI with Vaactor.UIVaactor {
-  ui =>
+@Route("")
+@Theme(value = classOf[Lumo], variant = Lumo.DARK)
+@Push(value = PushMode.AUTOMATIC, transport = Transport.WEBSOCKET)
+class ExampleUI extends VerticalLayout with Vaactor.HasActor with Vaactor.HasSession {
 
   // counter local to this UI
   var uiCnt = 0
 
   val stateDisplay = new Label()
-  val layout: VerticalLayout = new VerticalLayout {
-    setMargin(true)
-    setSpacing(true)
-    addComponent(new Label("Vaactor Example") {
-      addStyleName(ValoTheme.LABEL_H1)
-    })
-    addComponent(new Button("Click Me", { _ =>
-      uiCnt += 1
-      send2SessionActor(s"Thanks for clicking! (uiCnt:$uiCnt)")
-    })
-    )
-    addComponent(stateDisplay)
-    addComponent(new ExampleStateButton(ui))
-  }
 
-  override def init(request: VaadinRequest): Unit = { setContent(layout) }
+  setMargin(true)
+  setSpacing(true)
+  add(new Label("Vaactor Example"))
+  add(
+    new Button("Click Me", { _ =>
+      uiCnt += 1
+      session ! s"Thanks for clicking! (uiCnt:$uiCnt)"
+    })
+  )
+  add(stateDisplay)
+  add(
+    new Button("Show Counts") with Vaactor.HasActor {
+      addClickListener(_ => session ! VaactorSession.RequestSessionState)
+
+      override def receive: Receive = {
+        case state: Int => setText(s"Show Counts - uiCnt is $uiCnt, sessionCnt is $state, globalCnt is $globalCnt")
+      }
+    }
+  )
 
   override def receive: Receive = {
     case hello: String =>
       globalCnt += 1
-      stateDisplay.setValue(s"$hello (globalCnt:$globalCnt)")
+      stateDisplay.setText(s"$hello (globalCnt:$globalCnt)")
   }
 
 }
@@ -138,17 +136,6 @@ class ExampleSessionActor extends Actor with VaactorSession[Int] {
   }
 
 }
-
-class ExampleStateButton(val vaactorUI: VaactorUI) extends Button with Vaactor {
-
-  setCaption("SessionState")
-  addClickListener { _ => vaactorUI.sessionActor ! VaactorSession.RequestSessionState }
-
-  override def receive: Receive = {
-    case state: Int => setCaption(s"SessionState is $state")
-  }
-
-}
 ```
 
 ### Deployment
@@ -160,7 +147,7 @@ During development you could use [xsb-web-plugin](http://earldouglas.com/project
 addSbtPlugin("com.earldouglas" % "xsbt-web-plugin" % "4.0.2")
 ```
 
-The actual default version of jetty in the plugin has problems with Vaadin 8.3 and websockets,
+The actual default version of jetty in the plugin has problems with Vaadin 10.0 and websockets,
 so you should use the specific jetty version configured below.
 
 ```sbt

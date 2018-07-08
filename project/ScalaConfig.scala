@@ -2,7 +2,7 @@ object ScalaConfig {
 
   val scalaBinVersion = "2.12"
 
-  val version = s"${ scalaBinVersion }.4"
+  val version = s"${ scalaBinVersion }.6"
 
   val crossVersions = Seq(version)
 

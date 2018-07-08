@@ -4,6 +4,7 @@ import org.vaadin.addons.vaactor.VaactorSession
 import org.vaadin.addons.vaactor.chat.ChatServer
 
 import akka.actor.Actor
+import akka.event.LoggingReceive
 
 /** Contains session actor class and messages
   *
@@ -45,7 +46,7 @@ object Session {
     override val initialSessionState = State()
 
     /** Behaviour of session, processes received messages */
-    override val sessionBehaviour: Receive = {
+    override val sessionBehaviour: Receive = LoggingReceive {
       // Chat statement from ui, send send text and user name to chatServer
       case Session.Message(msg) =>
         ChatServer.chatServer ! ChatServer.Statement(sessionState.name, msg)
